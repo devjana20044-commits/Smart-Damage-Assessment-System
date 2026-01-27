@@ -1,0 +1,65 @@
+# Flutter
+smart_damage_assessment/.dart_tool/
+smart_damage_assessment/.flutter-plugins
+smart_damage_assessment/.flutter-plugins-dependencies
+smart_damage_assessment/.packages
+smart_damage_assessment/.pub-cache/
+smart_damage_assessment/.pub/
+smart_damage_assessment/build/
+
+# Android
+smart_damage_assessment/android/.gradle/
+smart_damage_assessment/android/app/build/
+smart_damage_assessment/android/local.properties
+smart_damage_assessment/*.keystore
+smart_damage_assessment/*.jks
+
+# iOS
+smart_damage_assessment/ios/Pods/
+smart_damage_assessment/ios/.symlinks/
+smart_damage_assessment/ios/Flutter/Flutter.framework
+smart_damage_assessment/ios/Flutter/Flutter.podspec
+smart_damage_assessment/ios/.generated/
+smart_damage_assessment/ios/Runner.xcworkspace/
+smart_damage_assessment/ios/Runner.xcodeproj/xcuserdata/
+smart_damage_assessment/ios/Runner/GeneratedPluginRegistrant.*
+
+# macOS
+smart_damage_assessment/macos/Pods/
+smart_damage_assessment/macos/.symlinks/
+smart_damage_assessment/macos/Flutter/Flutter.framework
+smart_damage_assessment/macos/Flutter/Flutter.podspec
+smart_damage_assessment/macos/.generated/
+smart_damage_assessment/macos/Runner.xcworkspace/
+smart_damage_assessment/macos/Runner.xcodeproj/xcuserdata/
+
+# Linux
+smart_damage_assessment/linux/flutter/ephemeral/
+smart_damage_assessment/linux/.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Laravel (if exists)
+/vendor/
+/node_modules/
+/.env
+/storage/*.key
+/public/storage
+/public/hot
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
