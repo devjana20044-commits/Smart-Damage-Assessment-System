@@ -38,14 +38,31 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     setState(() => _isGettingLocation = true);
 
     try {
-      // Check location permission
-      final permission = await Permission.location.request();
-      if (!permission.isGranted) {
-        _showSnackBar('Location permission denied');
+      // 1. Check if location service is enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showSnackBar('Location service is disabled. Please enable GPS.');
         return;
       }
 
-      // Get current position
+      // 2. Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      
+      if (permission == LocationPermission.denied) {
+        // Request permission if not granted
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _showSnackBar('Location permission denied');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        _showSnackBar('Location permission denied permanently. Please enable in app settings.');
+        return;
+      }
+
+      // 3. Get current position
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
@@ -56,6 +73,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       });
 
       _showSnackBar('Location obtained successfully');
+      print("Latitude: ${position.latitude}, Longitude: ${position.longitude}");
     } catch (e) {
       _showSnackBar('Failed to get location: ${e.toString()}');
     } finally {
@@ -68,7 +86,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       // Check camera permission
       final permission = await Permission.camera.request();
       if (!permission.isGranted) {
-        _showSnackBar('Camera permission denied');
+        if (permission.isPermanentlyDenied) {
+          _showSnackBar('Camera permission denied permanently. Please enable in app settings.');
+        } else {
+          _showSnackBar('Camera permission denied');
+        }
         return;
       }
 
@@ -84,6 +106,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           _selectedImage = File(pickedFile.path);
         });
         _showSnackBar('Photo captured successfully');
+        print("Image Path: ${pickedFile.path}");
       }
     } catch (e) {
       _showSnackBar('Failed to take photo: ${e.toString()}');

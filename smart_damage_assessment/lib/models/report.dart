@@ -214,7 +214,9 @@ class DamageAssessment {
 
   factory DamageAssessment.fromJson(Map<String, dynamic> json) {
     return DamageAssessment(
-      level: DamageLevel.fromString(json['level'] as String),
+      level: json['level'] != null
+          ? DamageLevel.fromString(json['level'] as String)
+          : DamageLevel.low,
       status: ReportStatus.fromString(json['status'] as String),
     );
   }

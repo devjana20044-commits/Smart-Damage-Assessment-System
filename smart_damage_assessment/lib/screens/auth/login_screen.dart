@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_indicator.dart';
@@ -66,9 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     final theme = Theme.of(context);
     final authProvider = context.watch<AuthProvider>();
-
+    final localeProvider = context.watch<LocaleProvider>();
+    
     // Show error message if any
     if (authProvider.errorMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -79,9 +83,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تسجيل الدخول'),
+        title: Text(loc.login),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: () {
+              localeProvider.changeLocale(
+                localeProvider.isArabic ? const Locale('en') : const Locale('ar'),
+              );
+            },
+            tooltip: loc.language,
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
@@ -89,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
-            tooltip: 'الإعدادات',
+            tooltip: loc.settings,
           ),
         ],
       ),
@@ -122,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Title
                   Text(
-                    'Welcome Back',
+                    loc.welcomeBack,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurface,
@@ -134,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Subtitle
                   Text(
-                    'Sign in to continue reporting damage',
+                    loc.signInToContinue,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
@@ -146,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Email field
                   EmailTextField(
                     controller: _emailController,
-                    labelText: 'Email Address',
+                    labelText: loc.email,
                     hintText: 'Enter your email',
                   ),
 
@@ -155,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Password field
                   PasswordTextField(
                     controller: _passwordController,
-                    labelText: 'Password',
+                    labelText: loc.password,
                     hintText: 'Enter your password',
                   ),
 
@@ -163,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Login button
                   CustomButton(
-                    text: 'Sign In',
+                    text: loc.signIn,
                     onPressed: authProvider.isLoading ? null : _login,
                     isLoading: authProvider.isLoading,
                   ),
@@ -175,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Don't have an account? ",
+                        loc.dontHaveAccount,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.7),
                         ),
@@ -194,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          'Sign Up',
+                          loc.signUp,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.primaryColor,
                             fontWeight: FontWeight.w600,
@@ -208,10 +221,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Loading overlay
                   if (authProvider.isLoading)
-                    const LoadingOverlay(
+                    LoadingOverlay(
                       isLoading: true,
                       child: SizedBox.shrink(),
-                      message: 'Signing in...',
+                      message: '${loc.loading}...',
                     ),
                 ],
               ),

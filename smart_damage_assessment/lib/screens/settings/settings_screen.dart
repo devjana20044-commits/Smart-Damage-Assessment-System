@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import '../../core/config.dart';
+import '../../core/localization.dart';
+import '../../providers/locale_provider.dart';
 import '../../services/storage_service.dart';
 import '../../services/dio_service.dart';
 import '../../widgets/custom_button.dart';
@@ -273,10 +276,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
+    final localeProvider = context.watch<LocaleProvider>();
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الإعدادات'),
+        title: Text(loc.settings),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: () {
+              localeProvider.changeLocale(
+                localeProvider.isArabic ? const Locale('en') : const Locale('ar'),
+              );
+            },
+            tooltip: loc.language,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: LoadingIndicator())
