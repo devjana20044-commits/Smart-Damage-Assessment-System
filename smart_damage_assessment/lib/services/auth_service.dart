@@ -17,21 +17,21 @@ class AuthService {
     try {
       final response = await _dioService.dio.post(
         ApiConstants.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       final responseData = response.data;
-      print('🔍 AUTH SERVICE - Response data type: ${responseData.runtimeType}');
+      print(
+        '🔍 AUTH SERVICE - Response data type: ${responseData.runtimeType}',
+      );
       print('🔍 AUTH SERVICE - Response data: $responseData');
 
       // Handle the actual API response structure
       // API returns: { "token": "...", "user": {...} }
       if (responseData is Map<String, dynamic>) {
         final token = responseData[ApiConstants.token] as String?;
-        final userData = responseData[ApiConstants.user] as Map<String, dynamic>?;
+        final userData =
+            responseData[ApiConstants.user] as Map<String, dynamic>?;
 
         if (token != null && userData != null) {
           print('✅ Token extracted: $token');
@@ -57,8 +57,12 @@ class AuthService {
         throw Exception('Invalid response format');
       }
     } on DioException catch (e) {
-      // DioService interceptor will handle DioException and throw user-friendly errors
-      rethrow;
+      // Error interceptor already created user-friendly message in e.error
+      final message = e.error is String
+          ? e.error as String
+          : 'Login failed. Please try again.';
+      print('❌ Login DioException: $message');
+      throw Exception(message);
     } catch (e) {
       print('❌ Login error: ${e.toString()}');
       throw Exception('Login failed: ${e.toString()}');
@@ -90,7 +94,8 @@ class AuthService {
       // API returns: { "token": "...", "user": {...} }
       if (responseData is Map<String, dynamic>) {
         final token = responseData[ApiConstants.token] as String?;
-        final userData = responseData[ApiConstants.user] as Map<String, dynamic>?;
+        final userData =
+            responseData[ApiConstants.user] as Map<String, dynamic>?;
 
         if (token != null && userData != null) {
           print('✅ Register - Token extracted: $token');
@@ -116,7 +121,11 @@ class AuthService {
         throw Exception('Invalid response format');
       }
     } on DioException catch (e) {
-      rethrow;
+      final message = e.error is String
+          ? e.error as String
+          : 'Registration failed. Please try again.';
+      print('❌ Register DioException: $message');
+      throw Exception(message);
     } catch (e) {
       print('❌ Register error: ${e.toString()}');
       throw Exception('Registration failed: ${e.toString()}');
@@ -186,7 +195,11 @@ class AuthService {
         throw Exception('Invalid response format');
       }
     } on DioException catch (e) {
-      rethrow;
+      final message = e.error is String
+          ? e.error as String
+          : 'Failed to fetch user data.';
+      print('❌ Fetch current user DioException: $message');
+      throw Exception(message);
     } catch (e) {
       print('❌ Fetch current user error: ${e.toString()}');
       throw Exception('Failed to fetch current user: ${e.toString()}');

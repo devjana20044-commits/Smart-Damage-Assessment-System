@@ -233,7 +233,10 @@ class DamageAssessment {
 class Report {
   final int id;
   final ReportUser user;
-  final String imageUrl;
+  final String imageUrl; // Legacy field for backward compatibility
+  final List<String> images; // New field: multiple images
+  final String? pdfUrl; // New field: PDF file URL
+  final List<String> videoLinks; // New field: video links
   final ReportLocation location;
   final ReportDescription description;
   final DamageAssessment damageAssessment;
@@ -244,6 +247,9 @@ class Report {
     required this.id,
     required this.user,
     required this.imageUrl,
+    this.images = const [],
+    this.pdfUrl,
+    this.videoLinks = const [],
     required this.location,
     required this.description,
     required this.damageAssessment,
@@ -253,10 +259,27 @@ class Report {
 
   /// Create Report from JSON (new API response format)
   factory Report.fromJson(Map<String, dynamic> json) {
+    // Handle backward compatibility for images
+    List<String> imagesList = [];
+    if (json['images'] != null && json['images'] is List) {
+      imagesList = List<String>.from(json['images'] as List);
+    } else if (json['image_url'] != null) {
+      // Fallback to old single image format
+      imagesList = [json['image_url'] as String];
+    }
+
+    // Legacy imageUrl for backward compatibility
+    String legacyImageUrl = imagesList.isNotEmpty ? imagesList.first : '';
+
     return Report(
       id: json['id'] as int,
       user: ReportUser.fromJson(json['user'] as Map<String, dynamic>),
-      imageUrl: json['image_url'] as String,
+      imageUrl: json['image_url'] as String? ?? legacyImageUrl,
+      images: imagesList,
+      pdfUrl: json['pdf_url'] as String?,
+      videoLinks: json['video_links'] != null && json['video_links'] is List
+          ? List<String>.from(json['video_links'] as List)
+          : const [],
       location: ReportLocation.fromJson(json['location'] as Map<String, dynamic>),
       description: ReportDescription.fromJson(json['description'] as Map<String, dynamic>),
       damageAssessment: DamageAssessment.fromJson(json['damage_assessment'] as Map<String, dynamic>),
@@ -271,6 +294,9 @@ class Report {
       'id': id,
       'user': user.toJson(),
       'image_url': imageUrl,
+      'images': images,
+      'pdf_url': pdfUrl,
+      'video_links': videoLinks,
       'location': location.toJson(),
       'description': description.toJson(),
       'damage_assessment': damageAssessment.toJson(),

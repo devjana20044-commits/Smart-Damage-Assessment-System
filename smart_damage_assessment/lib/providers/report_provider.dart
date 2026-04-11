@@ -116,6 +116,42 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
+  /// Create a new report with multimedia support (multiple images, PDF, video links)
+  Future<bool> createReportWithMultimedia({
+    required String userInputLocation,
+    String? userNotes,
+    double? latitude,
+    double? longitude,
+    List<File>? images,
+    File? pdfFile,
+    List<String>? videoLinks,
+  }) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final newReport = await _reportService.createReportWithMultimedia(
+        rawLocation: userInputLocation,
+        rawDescription: userNotes,
+        latitude: latitude,
+        longitude: longitude,
+        images: images,
+        pdfFile: pdfFile,
+        videoLinks: videoLinks,
+      );
+
+      // Add to reports list
+      _reports.insert(0, newReport);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Refresh reports list
   Future<void> refreshReports() async {
     await fetchReports();

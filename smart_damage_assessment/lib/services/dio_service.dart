@@ -34,9 +34,7 @@ class DioService {
         connectTimeout: AppConfig.connectTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
         sendTimeout: AppConfig.sendTimeout,
-        headers: {
-          ApiConstants.contentType: ApiConstants.jsonContentType,
-        },
+        headers: {ApiConstants.contentType: ApiConstants.jsonContentType},
       ),
     );
 
@@ -54,13 +52,19 @@ class DioService {
     _dio.options.baseUrl = baseUrl;
   }
 
+  /// Reset the singleton instance (used when backend URL changes)
+  static void resetInstance() {
+    _instance = null;
+  }
+
   /// Get configured Dio instance
   Dio get dio => _dio;
 
   /// Update auth token in headers
   Future<void> updateAuthToken(String? token) async {
     if (token != null) {
-      _dio.options.headers[ApiConstants.authorization] = '${ApiConstants.bearer} $token';
+      _dio.options.headers[ApiConstants.authorization] =
+          '${ApiConstants.bearer} $token';
     } else {
       _dio.options.headers.remove(ApiConstants.authorization);
     }
@@ -74,11 +78,15 @@ class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._storageService);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     // Add auth token if available
     final token = _storageService.getToken();
     if (token != null && token.isNotEmpty) {
-      options.headers[ApiConstants.authorization] = '${ApiConstants.bearer} $token';
+      options.headers[ApiConstants.authorization] =
+          '${ApiConstants.bearer} $token';
     }
 
     // Ensure content-type is set for non-multipart requests
@@ -113,7 +121,9 @@ class _LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     print('❌ ERROR: ${err.type} ${err.requestOptions.uri}');
     if (err.response != null) {
-      print('📥 ERROR RESPONSE: ${err.response?.statusCode} ${err.response?.data}');
+      print(
+        '📥 ERROR RESPONSE: ${err.response?.statusCode} ${err.response?.data}',
+      );
     }
     super.onError(err, handler);
   }
@@ -123,42 +133,83 @@ class _LoggingInterceptor extends Interceptor {
 class _ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle common HTTP errors
+    // Handle common HTTP errors and create user-friendly messages
+    String errorMessage;
+
     switch (err.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        throw Exception('Connection timeout. Please check your internet connection.');
+        errorMessage =
+            'Connection timeout. Please check your internet connection.';
+        break;
 
       case DioExceptionType.connectionError:
-        throw Exception('Connection error. Please check your internet connection.');
+        errorMessage =
+            'Connection error. Please check your internet connection and make sure the server is running.';
+        break;
 
       case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
         final responseData = err.response?.data;
 
         if (statusCode == 401) {
-          throw Exception('Unauthorized. Please login again.');
+          // API returns: { "error": "Invalid credentials" }
+          errorMessage =
+              _extractErrorMessage(responseData) ??
+              'Invalid credentials. Please check your email and password.';
         } else if (statusCode == 403) {
-          throw Exception('Access forbidden.');
+          errorMessage = 'Access forbidden.';
         } else if (statusCode == 404) {
-          throw Exception('Resource not found.');
+          errorMessage = 'Resource not found.';
         } else if (statusCode == 422) {
-          // Validation errors
+          // Validation errors: { "errors": { "field": ["message"] } }
           final errors = responseData?[ApiConstants.errors];
           if (errors != null && errors is Map) {
-            final errorMessages = errors.values.expand((e) => e).toList();
-            throw Exception(errorMessages.join('\n'));
+            final errorMessages = errors.values
+                .expand((e) => (e as List))
+                .toList();
+            errorMessage = errorMessages.join('\n');
+          } else {
+            errorMessage =
+                _extractErrorMessage(responseData) ?? 'Validation error.';
           }
-          throw Exception('Validation error.');
         } else if (statusCode == 500) {
-          throw Exception('Server error. Please try again later.');
+          errorMessage = 'Server error. Please try again later.';
         } else {
-          throw Exception('HTTP ${statusCode}: ${responseData?[ApiConstants.message] ?? 'Unknown error'}');
+          errorMessage =
+              _extractErrorMessage(responseData) ?? 'Unknown error occurred.';
         }
+        break;
 
       default:
-        throw Exception('An unexpected error occurred. Please try again.');
+        errorMessage = 'An unexpected error occurred. Please try again.';
     }
+
+    // Use handler.reject to properly propagate the error to the caller
+    handler.reject(
+      DioException(
+        requestOptions: err.requestOptions,
+        response: err.response,
+        type: err.type,
+        error: errorMessage,
+      ),
+    );
+  }
+
+  /// Extract error message from various API response formats
+  String? _extractErrorMessage(dynamic responseData) {
+    if (responseData is! Map<String, dynamic>) return null;
+
+    // Try "error" key: { "error": "Invalid credentials" }
+    if (responseData['error'] != null) {
+      return responseData['error'].toString();
+    }
+    // Try "message" key: { "message": "Some error" }
+    if (responseData['message'] != null) {
+      return responseData['message'].toString();
+    }
+
+    return null;
   }
 }

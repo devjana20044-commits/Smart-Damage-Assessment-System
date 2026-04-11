@@ -160,6 +160,79 @@ class ReportService {
     }
   }
 
+  /// Create a new report with multiple images, PDF, and video links
+  /// New API v2 method supporting multimedia uploads
+  Future<Report> createReportWithMultimedia({
+    required String rawLocation,
+    String? rawDescription,
+    double? latitude,
+    double? longitude,
+    List<File>? images,
+    File? pdfFile,
+    List<String>? videoLinks,
+  }) async {
+    try {
+      // Build multipart form data
+      final Map<String, dynamic> formDataMap = {
+        ApiConstants.rawLocation: rawLocation,
+        if (rawDescription != null && rawDescription.isNotEmpty)
+          ApiConstants.rawDescription: rawDescription,
+        if (latitude != null) ApiConstants.latitude: latitude.toString(),
+        if (longitude != null) ApiConstants.longitude: longitude.toString(),
+      };
+
+      // Add multiple images
+      if (images != null && images.isNotEmpty) {
+        final List<MultipartFile> imageFiles = [];
+        for (var image in images) {
+          imageFiles.add(await MultipartFile.fromFile(
+            image.path,
+            filename: image.path.split('/').last,
+          ));
+        }
+        formDataMap['images[]'] = imageFiles;
+      }
+
+      // Add PDF file
+      if (pdfFile != null) {
+        formDataMap['pdf_file'] = await MultipartFile.fromFile(
+          pdfFile.path,
+          filename: pdfFile.path.split('/').last,
+        );
+      }
+
+      // Add video links
+      if (videoLinks != null && videoLinks.isNotEmpty) {
+        formDataMap['video_links[]'] = videoLinks;
+      }
+
+      final formData = FormData.fromMap(formDataMap);
+
+      final response = await _dioService.dio.post(
+        ApiConstants.reports,
+        data: formData,
+        options: Options(
+          headers: {
+            ApiConstants.contentType: ApiConstants.multipartContentType,
+          },
+        ),
+      );
+
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
+        final data = responseData['data'] as Map<String, dynamic>;
+        final reportId = data['id'] as int;
+        return await getReportById(reportId);
+      } else {
+        throw Exception('Invalid response format');
+      }
+    } on DioException catch (e) {
+      rethrow;
+    } catch (e) {
+      throw Exception('Failed to create report: ${e.toString()}');
+    }
+  }
+
   /// Delete a report by ID
   /// New API endpoint: DELETE /api/reports/{id}
   Future<void> deleteReport(int id) async {

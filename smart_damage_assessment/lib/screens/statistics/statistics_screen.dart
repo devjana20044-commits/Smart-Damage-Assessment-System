@@ -17,7 +17,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    // Load reports if not already loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final reportProvider = context.read<ReportProvider>();
       if (reportProvider.reports.isEmpty) {
@@ -32,14 +31,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.statistics),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(loc.statistics), centerTitle: true),
       body: Consumer<ReportProvider>(
         builder: (context, reportProvider, child) {
           final reports = reportProvider.reports;
-          
+
           if (reportProvider.isLoading && reports.isEmpty) {
             return LoadingIndicator(message: loc.loadingStatistics);
           }
@@ -55,11 +51,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           final processing = reports.where((r) => r.isProcessing).length;
           final rejected = reports.where((r) => r.isRejected).length;
 
-          // Damage level counts
-          final low = reports.where((r) => r.damageAssessment.level == DamageLevel.low).length;
-          final medium = reports.where((r) => r.damageAssessment.level == DamageLevel.medium).length;
-          final high = reports.where((r) => r.damageAssessment.level == DamageLevel.high).length;
-          final critical = reports.where((r) => r.damageAssessment.level == DamageLevel.critical).length;
+          // Damage level counts - only for completed reports
+          final completedReports = reports.where((r) => r.isCompleted);
+          final lowCount = completedReports
+              .where((r) => r.damageAssessment.level == DamageLevel.low)
+              .length;
+          final mediumCount = completedReports
+              .where((r) => r.damageAssessment.level == DamageLevel.medium)
+              .length;
+          final highCount = completedReports
+              .where((r) => r.damageAssessment.level == DamageLevel.high)
+              .length;
+          final criticalCount = completedReports
+              .where((r) => r.damageAssessment.level == DamageLevel.critical)
+              .length;
 
           return RefreshIndicator(
             onRefresh: () => reportProvider.fetchReports(),
@@ -68,122 +73,39 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Summary Cards
-                  Text(
-                    loc.totalReports,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  // Total Reports Card - Smaller
+                  _buildTotalCard(total, theme),
+                  const SizedBox(height: 20),
+
+                  // Status Section
+                  _buildSectionTitle(context, loc.reportStatus, theme),
                   const SizedBox(height: 12),
-                  _buildSummaryCard(
-                    context,
-                    title: loc.totalReports,
-                    count: total,
-                    color: theme.primaryColor,
-                    icon: Icons.assignment,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Status Breakdown
-                  Text(
-                    loc.reportStatus,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 2.5,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    children: [
-                      _buildStatusCard(
-                        context,
-                        title: loc.completedReports,
-                        count: completed,
-                        color: AppTheme.successColor,
-                        icon: Icons.check_circle,
-                      ),
-                      _buildStatusCard(
-                        context,
-                        title: loc.pendingReports,
-                        count: pending,
-                        color: AppTheme.statusPending,
-                        icon: Icons.pending,
-                      ),
-                      _buildStatusCard(
-                        context,
-                        title: loc.processing,
-                        count: processing,
-                        color: AppTheme.accentColor,
-                        icon: Icons.sync,
-                      ),
-                      _buildStatusCard(
-                        context,
-                        title: loc.rejectedReports,
-                        count: rejected,
-                        color: AppTheme.errorColor,
-                        icon: Icons.cancel,
-                      ),
-                    ],
+                  _buildStatusGrid(
+                    context: context,
+                    completed: completed,
+                    pending: pending,
+                    processing: processing,
+                    rejected: rejected,
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Damage Levels
-                  Text(
-                    loc.damageLevels,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+
+                  // Damage Levels Section
+                  _buildSectionTitle(context, loc.damageLevels, theme),
                   const SizedBox(height: 12),
-                  _buildDamageLevelsSection(
+                  _buildDamageLevelsCard(
                     context,
-                    low: low,
-                    medium: medium,
-                    high: high,
-                    critical: critical,
-                    total: total,
+                    loc: loc,
+                    theme: theme,
+                    low: lowCount,
+                    medium: mediumCount,
+                    high: highCount,
+                    critical: criticalCount,
+                    processedTotal: completedReports.length,
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Chart Placeholder (optional)
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            loc.distributionOverview,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            height: 150,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                loc.chartPlaceholder,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+
+                  // Distribution Overview
+                  _buildDistributionCard(context, loc, theme),
                 ],
               ),
             ),
@@ -195,93 +117,199 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget _buildEmptyState(BuildContext context, AppLocalizations loc) {
     final theme = Theme.of(context);
-    
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.bar_chart_outlined,
+                size: 60,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              loc.noDataAvailable,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              loc.createReportsToSeeStats,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalCard(int total, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.assignment_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.loc.totalReports,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  total.toString(),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
           Icon(
-            Icons.bar_chart,
-            size: 80,
-            color: theme.colorScheme.onSurface.withOpacity(0.3),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            loc.noDataAvailable,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            loc.createReportsToSeeStats,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
+            Icons.trending_up,
+            color: Colors.white.withValues(alpha: 0.7),
+            size: 28,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard(
-    BuildContext context, {
-    required String title,
-    required int count,
-    required Color color,
-    required IconData icon,
+  Widget _buildSectionTitle(
+    BuildContext context,
+    String title,
+    ThemeData theme,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusGrid({
+    required BuildContext context,
+    required int completed,
+    required int pending,
+    required int processing,
+    required int rejected,
   }) {
-    final theme = Theme.of(context);
-    
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+    final loc = context.loc;
+
+    return Column(
+      children: [
+        Row(
           children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: color,
+            Expanded(
+              child: _buildStatusCard(
+                context,
+                title: loc.completedReports,
+                count: completed,
+                color: AppTheme.successColor,
+                icon: Icons.check_circle_outline,
               ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    count.toString(),
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ],
+              child: _buildStatusCard(
+                context,
+                title: loc.pendingReports,
+                count: pending,
+                color: AppTheme.statusPending,
+                icon: Icons.pending_outlined,
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatusCard(
+                context,
+                title: loc.processing,
+                count: processing,
+                color: AppTheme.accentColor,
+                icon: Icons.sync,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatusCard(
+                context,
+                title: loc.rejectedReports,
+                count: rejected,
+                color: AppTheme.errorColor,
+                icon: Icons.cancel_outlined,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -293,130 +321,168 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     required IconData icon,
   }) {
     final theme = Theme.of(context);
-    
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: color,
-              ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  count.toString(),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    height: 1.0,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    count.toString(),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
                   ),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDamageLevelsSection(
+  Widget _buildDamageLevelsCard(
     BuildContext context, {
+    required AppLocalizations loc,
+    required ThemeData theme,
     required int low,
     required int medium,
     required int high,
     required int critical,
-    required int total,
+    required int processedTotal,
   }) {
-    final loc = context.loc;
-    final theme = Theme.of(context);
-    
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.warning,
-                  color: theme.primaryColor,
-                  size: 20,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.analytics_outlined,
+                color: theme.colorScheme.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                loc.damageSeverityDistribution,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  loc.damageSeverityDistribution,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+            ],
+          ),
+          if (processedTotal == 0) ...[
+            const SizedBox(height: 24),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 48,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'لا توجد تقارير معالجة بعد',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 16),
+          ] else ...[
+            const SizedBox(height: 20),
             _buildDamageLevelRow(
               context,
               label: loc.low,
               count: low,
-              total: total,
+              total: processedTotal,
               color: AppTheme.damageLow,
-              icon: Icons.tag_faces,
+              icon: Icons.sentiment_satisfied_alt,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             _buildDamageLevelRow(
               context,
               label: loc.medium,
               count: medium,
-              total: total,
+              total: processedTotal,
               color: AppTheme.damageMedium,
-              icon: Icons.warning_amber,
+              icon: Icons.sentiment_neutral,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             _buildDamageLevelRow(
               context,
               label: loc.high,
               count: high,
-              total: total,
+              total: processedTotal,
               color: AppTheme.damageHigh,
-              icon: Icons.error_outline,
+              icon: Icons.sentiment_dissatisfied,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             _buildDamageLevelRow(
               context,
               label: loc.critical,
               count: critical,
-              total: total,
+              total: processedTotal,
               color: AppTheme.damageCritical,
-              icon: Icons.dangerous,
+              icon: Icons.dangerous_outlined,
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -431,58 +497,141 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }) {
     final theme = Theme.of(context);
     final percentage = total > 0 ? (count / total * 100).round() : 0;
-    
-    return Row(
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: color,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$count ($percentage%)',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface,
+        const SizedBox(height: 8),
+        Stack(
+          children: [
+            Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            FractionallySizedBox(
+              widthFactor: total > 0 ? count / total : 0,
+              child: Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDistributionCard(
+    BuildContext context,
+    AppLocalizations loc,
+    ThemeData theme,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.pie_chart_outline,
+                color: theme.colorScheme.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                loc.distributionOverview,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.insert_chart_outlined,
+                    size: 48,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
+                  const SizedBox(height: 8),
                   Text(
-                    '$count ($percentage%)',
+                    loc.chartPlaceholder,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              LinearProgressIndicator(
-                value: total > 0 ? count / total : 0,
-                backgroundColor: theme.colorScheme.surfaceVariant,
-                color: color,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

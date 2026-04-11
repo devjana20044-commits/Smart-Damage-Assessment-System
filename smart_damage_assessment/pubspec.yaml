@@ -59,6 +59,15 @@ dependencies:
   # Permissions
   permission_handler: ^11.2.0
 
+  # File picker for PDF
+  file_picker: ^8.0.0
+
+  # Device info for Android version check
+  device_info_plus: ^10.1.0
+
+  # URL launcher for opening links
+  url_launcher: ^6.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

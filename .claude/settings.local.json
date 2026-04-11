@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter devices:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter:*)",
+      "Bash(adb devices:*)",
+      "Bash(powershell.exe:*)"
+    ]
+  }
+}

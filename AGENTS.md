@@ -116,3 +116,28 @@ php artisan make:model RawReport -m
 ## Current Status
 
 Planning phase - no code yet. Follow these guidelines during implementation.
+
+---
+
+## Communication Protocol (STRICT)
+
+**MANDATORY RULE**: The agent MUST ALWAYS respond by writing to `message.md` file in the project root.
+
+### Rules:
+- NEVER respond directly in chat output
+- ALWAYS write ALL responses to `message.md`
+- This applies to: answers, questions, code explanations, summaries, confirmations, errors
+- Overwrite `message.md` with each new response
+- Use clear markdown formatting
+- Language: Arabic or English as appropriate
+
+### Response Format in `message.md`:
+```markdown
+# Response
+
+[Content here]
+```
+
+### Exception:
+- Tool outputs (file reads, bash results) are allowed in chat
+- All textual communication to user MUST go through `message.md`

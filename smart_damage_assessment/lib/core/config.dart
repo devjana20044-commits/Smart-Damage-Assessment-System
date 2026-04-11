@@ -1,23 +1,23 @@
 import '../services/storage_service.dart';
 
 /// Configuration class for the Smart Damage Assessment app
-/// Handles different API base URLs for various development scenarios
+/// Handles different API base URLs - editable from Settings screen
 class AppConfig {
-  // Development scenarios (fallback defaults)
-  static const String _androidEmulator = 'http://10.0.2.2:8000/api';
-  static const String _physicalDevice = 'http://192.168.1.100:8000/api'; // Update this IP as needed
-  static const String _iosSimulator = 'http://127.0.0.1:8000/api';
+  // Default fallback values (used only when no saved config exists)
+  // These are NOT const — user can change them from Settings screen
+  static String defaultIp = '192.168.43.19';
+  static String defaultPort = '8000';
+  static String defaultPath = '/api';
 
-  /// Get the appropriate base URL based on the development scenario
-  /// Default is Android Emulator. Update this constant for your setup.
-  static String get baseUrl {
-    // TODO: Implement platform detection or manual override
-    // For now, defaulting to Android Emulator
-    return _androidEmulator;
-  }
+  /// Build base URL from current defaults
+  static String get _defaultUrl => 'http://$defaultIp:$defaultPort$defaultPath';
+
+  /// Get the fallback base URL (used when no SharedPreferences config exists)
+  static String get baseUrl => _defaultUrl;
 
   /// Build base URL dynamically from stored configuration
-  /// Returns the custom URL if configured, otherwise returns the default
+  /// Returns the custom URL from SharedPreferences if configured,
+  /// otherwise returns the default
   static Future<String> getDynamicBaseUrl({
     String? ip,
     String? port,
