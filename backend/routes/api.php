@@ -1,20 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Enjoy building your API!
-|
-*/
-
-// Health check endpoint
 Route::get('/', function () {
     return response()->json([
         'status' => 'ok',
@@ -24,15 +13,12 @@ Route::get('/', function () {
     ]);
 });
 
-// Public authentication routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-// Protected routes (require Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    // Reports routes (will be implemented later)
-    // Route::apiResource('reports', ReportController::class);
+    Route::apiResource('reports', ReportController::class)->except(['update']);
 });

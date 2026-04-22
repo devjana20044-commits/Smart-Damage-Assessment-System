@@ -101,23 +101,14 @@ class ReportUser {
   final int id;
   final String name;
 
-  ReportUser({
-    required this.id,
-    required this.name,
-  });
+  ReportUser({required this.id, required this.name});
 
   factory ReportUser.fromJson(Map<String, dynamic> json) {
-    return ReportUser(
-      id: json['id'] as int,
-      name: json['name'] as String,
-    );
+    return ReportUser(id: json['id'] as int, name: json['name'] as String);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-    };
+    return {'id': id, 'name': name};
   }
 }
 
@@ -127,18 +118,16 @@ class ReportLocation {
   final String? normalized;
   final ReportCoordinates? coordinates;
 
-  ReportLocation({
-    required this.raw,
-    this.normalized,
-    this.coordinates,
-  });
+  ReportLocation({required this.raw, this.normalized, this.coordinates});
 
   factory ReportLocation.fromJson(Map<String, dynamic> json) {
     return ReportLocation(
       raw: json['raw'] as String,
       normalized: json['normalized'] as String?,
       coordinates: json['coordinates'] != null
-          ? ReportCoordinates.fromJson(json['coordinates'] as Map<String, dynamic>)
+          ? ReportCoordinates.fromJson(
+              json['coordinates'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -157,10 +146,7 @@ class ReportCoordinates {
   final double latitude;
   final double longitude;
 
-  ReportCoordinates({
-    required this.latitude,
-    required this.longitude,
-  });
+  ReportCoordinates({required this.latitude, required this.longitude});
 
   factory ReportCoordinates.fromJson(Map<String, dynamic> json) {
     return ReportCoordinates(
@@ -170,10 +156,7 @@ class ReportCoordinates {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'latitude': latitude,
-      'longitude': longitude,
-    };
+    return {'latitude': latitude, 'longitude': longitude};
   }
 }
 
@@ -182,10 +165,7 @@ class ReportDescription {
   final String raw;
   final String? aiAnalysis;
 
-  ReportDescription({
-    required this.raw,
-    this.aiAnalysis,
-  });
+  ReportDescription({required this.raw, this.aiAnalysis});
 
   factory ReportDescription.fromJson(Map<String, dynamic> json) {
     return ReportDescription(
@@ -195,10 +175,7 @@ class ReportDescription {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'raw': raw,
-      'ai_analysis': aiAnalysis,
-    };
+    return {'raw': raw, 'ai_analysis': aiAnalysis};
   }
 }
 
@@ -207,10 +184,7 @@ class DamageAssessment {
   final DamageLevel level;
   final ReportStatus status;
 
-  DamageAssessment({
-    required this.level,
-    required this.status,
-  });
+  DamageAssessment({required this.level, required this.status});
 
   factory DamageAssessment.fromJson(Map<String, dynamic> json) {
     return DamageAssessment(
@@ -222,10 +196,7 @@ class DamageAssessment {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'level': level.name,
-      'status': status.name,
-    };
+    return {'level': level.name, 'status': status.name};
   }
 }
 
@@ -274,15 +245,21 @@ class Report {
     return Report(
       id: json['id'] as int,
       user: ReportUser.fromJson(json['user'] as Map<String, dynamic>),
-      imageUrl: json['image_url'] as String? ?? legacyImageUrl,
+      imageUrl: legacyImageUrl,
       images: imagesList,
       pdfUrl: json['pdf_url'] as String?,
       videoLinks: json['video_links'] != null && json['video_links'] is List
           ? List<String>.from(json['video_links'] as List)
           : const [],
-      location: ReportLocation.fromJson(json['location'] as Map<String, dynamic>),
-      description: ReportDescription.fromJson(json['description'] as Map<String, dynamic>),
-      damageAssessment: DamageAssessment.fromJson(json['damage_assessment'] as Map<String, dynamic>),
+      location: ReportLocation.fromJson(
+        json['location'] as Map<String, dynamic>,
+      ),
+      description: ReportDescription.fromJson(
+        json['description'] as Map<String, dynamic>,
+      ),
+      damageAssessment: DamageAssessment.fromJson(
+        json['damage_assessment'] as Map<String, dynamic>,
+      ),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -315,7 +292,8 @@ class Report {
   String get displayDamageLevel => damageAssessment.level.displayName;
 
   /// Get display damage level in Arabic
-  String get displayDamageLevelArabic => damageAssessment.level.displayNameArabic;
+  String get displayDamageLevelArabic =>
+      damageAssessment.level.displayNameArabic;
 
   /// Get formatted creation date
   String get formattedCreatedDate {

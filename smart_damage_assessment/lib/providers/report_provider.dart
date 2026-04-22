@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/report.dart';
 import '../services/report_service.dart';
 
-/// Provider for managing reports state
 class ReportProvider with ChangeNotifier {
   final ReportService _reportService;
 
@@ -14,13 +13,11 @@ class ReportProvider with ChangeNotifier {
 
   ReportProvider(this._reportService);
 
-  // Getters
   List<Report> get reports => _reports;
   Report? get currentReport => _currentReport;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Fetch all reports for the current user
   Future<void> fetchReports() async {
     _setLoading(true);
     _clearError();
@@ -35,7 +32,6 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  /// Fetch a specific report by ID
   Future<bool> fetchReportById(int id) async {
     _setLoading(true);
     _clearError();
@@ -52,29 +48,36 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  /// Create a new report
   Future<bool> createReport({
     required String userInputLocation,
     String? userNotes,
     double? latitude,
     double? longitude,
-    required File imageFile,
+    File? singleImage,
+    List<File>? images,
+    File? pdfFile,
+    List<String>? videoLinks,
   }) async {
     _setLoading(true);
     _clearError();
 
     try {
-      final newReport = await _reportService.createReport(
+      final result = await _reportService.createReport(
         rawLocation: userInputLocation,
         rawDescription: userNotes,
         latitude: latitude,
         longitude: longitude,
-        imageFile: imageFile,
+        singleImage: singleImage,
+        images: images,
+        pdfFile: pdfFile,
+        videoLinks: videoLinks,
       );
 
-      // Add to reports list
-      _reports.insert(0, newReport);
-      notifyListeners();
+      final reportId = result['id'] as int;
+      if (reportId > 0) {
+        await fetchReports();
+      }
+
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -84,39 +87,6 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  /// Create a new report with XFile support
-  Future<bool> createReportFromXFile({
-    required String userInputLocation,
-    String? userNotes,
-    double? latitude,
-    double? longitude,
-    required dynamic imageFile,
-  }) async {
-    _setLoading(true);
-    _clearError();
-
-    try {
-      final newReport = await _reportService.createReportFromXFile(
-        rawLocation: userInputLocation,
-        rawDescription: userNotes,
-        latitude: latitude,
-        longitude: longitude,
-        imageFile: imageFile,
-      );
-
-      // Add to reports list
-      _reports.insert(0, newReport);
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _setError(e.toString());
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Create a new report with multimedia support (multiple images, PDF, video links)
   Future<bool> createReportWithMultimedia({
     required String userInputLocation,
     String? userNotes,
@@ -126,72 +96,50 @@ class ReportProvider with ChangeNotifier {
     File? pdfFile,
     List<String>? videoLinks,
   }) async {
-    _setLoading(true);
-    _clearError();
-
-    try {
-      final newReport = await _reportService.createReportWithMultimedia(
-        rawLocation: userInputLocation,
-        rawDescription: userNotes,
-        latitude: latitude,
-        longitude: longitude,
-        images: images,
-        pdfFile: pdfFile,
-        videoLinks: videoLinks,
-      );
-
-      // Add to reports list
-      _reports.insert(0, newReport);
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _setError(e.toString());
-      return false;
-    } finally {
-      _setLoading(false);
-    }
+    return createReport(
+      userInputLocation: userInputLocation,
+      userNotes: userNotes,
+      latitude: latitude,
+      longitude: longitude,
+      images: images,
+      pdfFile: pdfFile,
+      videoLinks: videoLinks,
+    );
   }
 
-  /// Refresh reports list
   Future<void> refreshReports() async {
     await fetchReports();
   }
 
-  /// Clear current report
   void clearCurrentReport() {
     _currentReport = null;
     notifyListeners();
   }
 
-  /// Clear error message
   void clearError() {
     _clearError();
   }
 
-  /// Get reports by status
   List<Report> getReportsByStatus(String status) {
-    return _reports.where((report) =>
-        report.damageAssessment.status.name.toLowerCase() == status.toLowerCase()).toList();
+    return _reports
+        .where(
+          (report) =>
+              report.damageAssessment.status.name.toLowerCase() ==
+              status.toLowerCase(),
+        )
+        .toList();
   }
 
-  /// Get pending reports
   List<Report> get pendingReports => getReportsByStatus('pending');
+  List<Report> get completedReports => getReportsByStatus('completed');
+  List<Report> get rejectedReports => getReportsByStatus('rejected');
 
-  /// Get processed reports
-  List<Report> get processedReports => getReportsByStatus('processed');
-
-  /// Get failed reports
-  List<Report> get failedReports => getReportsByStatus('failed');
-
-  /// Delete a report by ID
   Future<bool> deleteReport(int reportId) async {
     _setLoading(true);
     _clearError();
 
     try {
       await _reportService.deleteReport(reportId);
-
-      // Remove from reports list
       _reports.removeWhere((report) => report.id == reportId);
       notifyListeners();
       return true;
@@ -203,7 +151,6 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
-  /// Private helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();

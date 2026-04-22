@@ -1,18 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../core/config.dart';
 import '../core/api_constants.dart';
 import 'storage_service.dart';
 
-/// Service for configuring and managing Dio HTTP client
 class DioService {
   static DioService? _instance;
   late Dio _dio;
   late StorageService _storageService;
 
-  /// Private constructor for singleton
   DioService._();
 
-  /// Get singleton instance
   static Future<DioService> getInstance() async {
     if (_instance == null) {
       _instance = DioService._();
@@ -21,11 +19,9 @@ class DioService {
     return _instance!;
   }
 
-  /// Initialize Dio with configuration
   Future<void> _init() async {
     _storageService = await StorageService.getInstance();
 
-    // Get dynamic base URL from stored settings
     final baseUrl = await AppConfig.getDynamicBaseUrl();
 
     _dio = Dio(
@@ -38,7 +34,6 @@ class DioService {
       ),
     );
 
-    // Add interceptors
     _dio.interceptors.addAll([
       _AuthInterceptor(_storageService),
       _LoggingInterceptor(),
@@ -46,21 +41,17 @@ class DioService {
     ]);
   }
 
-  /// Update base URL from stored settings
   Future<void> updateBaseUrl() async {
     final baseUrl = await AppConfig.getDynamicBaseUrl();
     _dio.options.baseUrl = baseUrl;
   }
 
-  /// Reset the singleton instance (used when backend URL changes)
   static void resetInstance() {
     _instance = null;
   }
 
-  /// Get configured Dio instance
   Dio get dio => _dio;
 
-  /// Update auth token in headers
   Future<void> updateAuthToken(String? token) async {
     if (token != null) {
       _dio.options.headers[ApiConstants.authorization] =
@@ -71,7 +62,6 @@ class DioService {
   }
 }
 
-/// Interceptor for adding authentication token to requests
 class _AuthInterceptor extends Interceptor {
   final StorageService _storageService;
 
@@ -82,14 +72,12 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Add auth token if available
     final token = _storageService.getToken();
     if (token != null && token.isNotEmpty) {
       options.headers[ApiConstants.authorization] =
           '${ApiConstants.bearer} $token';
     }
 
-    // Ensure content-type is set for non-multipart requests
     if (!options.headers.containsKey(ApiConstants.contentType) &&
         options.data is! FormData) {
       options.headers[ApiConstants.contentType] = ApiConstants.jsonContentType;
@@ -99,41 +87,42 @@ class _AuthInterceptor extends Interceptor {
   }
 }
 
-/// Interceptor for logging requests and responses
 class _LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    print('🌐 REQUEST: ${options.method} ${options.uri}');
-    if (options.data != null) {
-      print('📤 DATA: ${options.data}');
+    if (kDebugMode) {
+      debugPrint('🌐 REQUEST: ${options.method} ${options.uri}');
     }
     super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    print('✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
-    print('📥 RESPONSE DATA: ${response.data}');
+    if (kDebugMode) {
+      debugPrint(
+        '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}',
+      );
+    }
     super.onResponse(response, handler);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    print('❌ ERROR: ${err.type} ${err.requestOptions.uri}');
-    if (err.response != null) {
-      print(
-        '📥 ERROR RESPONSE: ${err.response?.statusCode} ${err.response?.data}',
-      );
+    if (kDebugMode) {
+      debugPrint('❌ ERROR: ${err.type} ${err.requestOptions.uri}');
+      if (err.response != null) {
+        debugPrint(
+          '📥 ERROR RESPONSE: ${err.response?.statusCode} ${err.response?.data}',
+        );
+      }
     }
     super.onError(err, handler);
   }
 }
 
-/// Interceptor for handling common errors
 class _ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle common HTTP errors and create user-friendly messages
     String errorMessage;
 
     switch (err.type) {
@@ -154,7 +143,6 @@ class _ErrorInterceptor extends Interceptor {
         final responseData = err.response?.data;
 
         if (statusCode == 401) {
-          // API returns: { "error": "Invalid credentials" }
           errorMessage =
               _extractErrorMessage(responseData) ??
               'Invalid credentials. Please check your email and password.';
@@ -163,7 +151,6 @@ class _ErrorInterceptor extends Interceptor {
         } else if (statusCode == 404) {
           errorMessage = 'Resource not found.';
         } else if (statusCode == 422) {
-          // Validation errors: { "errors": { "field": ["message"] } }
           final errors = responseData?[ApiConstants.errors];
           if (errors != null && errors is Map) {
             final errorMessages = errors.values
@@ -186,7 +173,6 @@ class _ErrorInterceptor extends Interceptor {
         errorMessage = 'An unexpected error occurred. Please try again.';
     }
 
-    // Use handler.reject to properly propagate the error to the caller
     handler.reject(
       DioException(
         requestOptions: err.requestOptions,
@@ -197,15 +183,12 @@ class _ErrorInterceptor extends Interceptor {
     );
   }
 
-  /// Extract error message from various API response formats
   String? _extractErrorMessage(dynamic responseData) {
     if (responseData is! Map<String, dynamic>) return null;
 
-    // Try "error" key: { "error": "Invalid credentials" }
     if (responseData['error'] != null) {
       return responseData['error'].toString();
     }
-    // Try "message" key: { "message": "Some error" }
     if (responseData['message'] != null) {
       return responseData['message'].toString();
     }

@@ -1,4 +1,3 @@
-/// User model for authentication and user data
 class User {
   final int id;
   final String name;
@@ -12,41 +11,20 @@ class User {
     required this.role,
   });
 
-  /// Create User from JSON
   factory User.fromJson(Map<String, dynamic> json) {
-    print('👤 USER MODEL - Parsing user from JSON: $json');
-    try {
-      final user = User(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        role: json['role'] as String? ?? 'user',
-      );
-      print('✅ USER MODEL - User parsed successfully: $user');
-      return user;
-    } catch (e) {
-      print('❌ USER MODEL - Failed to parse user: $e');
-      rethrow;
-    }
+    return User(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      email: json['email'] as String,
+      role: json['role'] as String? ?? 'field_user',
+    );
   }
 
-  /// Convert User to JSON
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'role': role,
-    };
+    return {'id': id, 'name': name, 'email': email, 'role': role};
   }
 
-  /// Create a copy of User with updated fields
-  User copyWith({
-    int? id,
-    String? name,
-    String? email,
-    String? role,
-  }) {
+  User copyWith({int? id, String? name, String? email, String? role}) {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,

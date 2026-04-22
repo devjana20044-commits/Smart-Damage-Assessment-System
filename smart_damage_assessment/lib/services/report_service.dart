@@ -4,33 +4,40 @@ import '../core/api_constants.dart';
 import '../models/report.dart';
 import 'dio_service.dart';
 
-/// Service for handling report-related API calls
 class ReportService {
   final DioService _dioService;
 
   ReportService(this._dioService);
 
-  /// Get all reports for the current user
-  /// New API returns array directly, not wrapped in success/data
   Future<List<Report>> getReports() async {
     try {
       final response = await _dioService.dio.get(ApiConstants.reports);
 
       final responseData = response.data;
       if (responseData is List) {
-        return responseData.map((json) => Report.fromJson(json as Map<String, dynamic>)).toList();
-      } else {
-        throw Exception('Invalid response format: expected array');
+        return responseData
+            .map((json) => Report.fromJson(json as Map<String, dynamic>))
+            .toList();
       }
-    } on DioException catch (e) {
+
+      if (responseData is Map<String, dynamic> &&
+          responseData.containsKey('data')) {
+        final data = responseData['data'];
+        if (data is List) {
+          return data
+              .map((json) => Report.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
+      }
+
+      throw Exception('Invalid response format: expected array');
+    } on DioException {
       rethrow;
     } catch (e) {
       throw Exception('Failed to load reports: ${e.toString()}');
     }
   }
 
-  /// Get a specific report by ID
-  /// New API returns report directly, not wrapped in success/data
   Future<Report> getReportById(int id) async {
     try {
       final response = await _dioService.dio.get('${ApiConstants.reports}/$id');
@@ -38,141 +45,27 @@ class ReportService {
       final responseData = response.data;
       if (responseData is Map<String, dynamic>) {
         return Report.fromJson(responseData);
-      } else {
-        throw Exception('Invalid response format: expected object');
       }
-    } on DioException catch (e) {
+
+      throw Exception('Invalid response format: expected object');
+    } on DioException {
       rethrow;
     } catch (e) {
       throw Exception('Failed to load report: ${e.toString()}');
     }
   }
 
-  /// Create a new report with image upload
-  /// New API uses raw_location and raw_description fields
-  Future<Report> createReport({
+  Future<Map<String, dynamic>> createReport({
     required String rawLocation,
     String? rawDescription,
     double? latitude,
     double? longitude,
-    required File imageFile,
-  }) async {
-    try {
-      // Create multipart form data with new field names
-      final formData = FormData.fromMap({
-        ApiConstants.rawLocation: rawLocation,
-        if (rawDescription != null && rawDescription.isNotEmpty) ApiConstants.rawDescription: rawDescription,
-        if (latitude != null) ApiConstants.latitude: latitude.toString(),
-        if (longitude != null) ApiConstants.longitude: longitude.toString(),
-        ApiConstants.image: await MultipartFile.fromFile(
-          imageFile.path,
-          filename: imageFile.path.split('/').last,
-        ),
-      });
-
-      final response = await _dioService.dio.post(
-        ApiConstants.reports,
-        data: formData,
-        options: Options(
-          headers: {
-            ApiConstants.contentType: ApiConstants.multipartContentType,
-          },
-        ),
-      );
-
-      final responseData = response.data;
-      // New API returns: { "data": { "id": ..., "status": ..., "message": ... } }
-      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
-        final data = responseData['data'] as Map<String, dynamic>;
-        // The response only contains id and status, not the full report
-        // We need to fetch the full report details
-        final reportId = data['id'] as int;
-        return await getReportById(reportId);
-      } else {
-        throw Exception('Invalid response format');
-      }
-    } on DioException catch (e) {
-      rethrow;
-    } catch (e) {
-      throw Exception('Failed to create report: ${e.toString()}');
-    }
-  }
-
-  /// Create a new report with image upload (alternative method with XFile support)
-  Future<Report> createReportFromXFile({
-    required String rawLocation,
-    String? rawDescription,
-    double? latitude,
-    double? longitude,
-    required dynamic imageFile, // Can be XFile or File
-  }) async {
-    try {
-      String filePath;
-      String fileName;
-
-      // Handle different file types
-      if (imageFile is File) {
-        filePath = imageFile.path;
-        fileName = imageFile.path.split('/').last;
-      } else {
-        // Assume it's XFile or similar
-        filePath = imageFile.path;
-        fileName = imageFile.name ?? 'image.jpg';
-      }
-
-      // Create multipart form data with new field names
-      final formData = FormData.fromMap({
-        ApiConstants.rawLocation: rawLocation,
-        if (rawDescription != null && rawDescription.isNotEmpty) ApiConstants.rawDescription: rawDescription,
-        if (latitude != null) ApiConstants.latitude: latitude.toString(),
-        if (longitude != null) ApiConstants.longitude: longitude.toString(),
-        ApiConstants.image: await MultipartFile.fromFile(
-          filePath,
-          filename: fileName,
-        ),
-      });
-
-      final response = await _dioService.dio.post(
-        ApiConstants.reports,
-        data: formData,
-        options: Options(
-          headers: {
-            ApiConstants.contentType: ApiConstants.multipartContentType,
-          },
-        ),
-      );
-
-      final responseData = response.data;
-      // New API returns: { "data": { "id": ..., "status": ..., "message": ... } }
-      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
-        final data = responseData['data'] as Map<String, dynamic>;
-        // The response only contains id and status, not the full report
-        // We need to fetch the full report details
-        final reportId = data['id'] as int;
-        return await getReportById(reportId);
-      } else {
-        throw Exception('Invalid response format');
-      }
-    } on DioException catch (e) {
-      rethrow;
-    } catch (e) {
-      throw Exception('Failed to create report: ${e.toString()}');
-    }
-  }
-
-  /// Create a new report with multiple images, PDF, and video links
-  /// New API v2 method supporting multimedia uploads
-  Future<Report> createReportWithMultimedia({
-    required String rawLocation,
-    String? rawDescription,
-    double? latitude,
-    double? longitude,
+    File? singleImage,
     List<File>? images,
     File? pdfFile,
     List<String>? videoLinks,
   }) async {
     try {
-      // Build multipart form data
       final Map<String, dynamic> formDataMap = {
         ApiConstants.rawLocation: rawLocation,
         if (rawDescription != null && rawDescription.isNotEmpty)
@@ -181,29 +74,31 @@ class ReportService {
         if (longitude != null) ApiConstants.longitude: longitude.toString(),
       };
 
-      // Add multiple images
       if (images != null && images.isNotEmpty) {
-        final List<MultipartFile> imageFiles = [];
-        for (var image in images) {
-          imageFiles.add(await MultipartFile.fromFile(
-            image.path,
-            filename: image.path.split('/').last,
-          ));
-        }
-        formDataMap['images[]'] = imageFiles;
+        formDataMap[ApiConstants.images] = await Future.wait(
+          images.map(
+            (img) => MultipartFile.fromFile(
+              img.path,
+              filename: img.path.split('/').last,
+            ),
+          ),
+        );
+      } else if (singleImage != null) {
+        formDataMap[ApiConstants.image] = await MultipartFile.fromFile(
+          singleImage.path,
+          filename: singleImage.path.split('/').last,
+        );
       }
 
-      // Add PDF file
       if (pdfFile != null) {
-        formDataMap['pdf_file'] = await MultipartFile.fromFile(
+        formDataMap[ApiConstants.pdfFile] = await MultipartFile.fromFile(
           pdfFile.path,
           filename: pdfFile.path.split('/').last,
         );
       }
 
-      // Add video links
       if (videoLinks != null && videoLinks.isNotEmpty) {
-        formDataMap['video_links[]'] = videoLinks;
+        formDataMap[ApiConstants.videoLinks] = videoLinks;
       }
 
       final formData = FormData.fromMap(formDataMap);
@@ -219,33 +114,23 @@ class ReportService {
       );
 
       final responseData = response.data;
-      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
-        final data = responseData['data'] as Map<String, dynamic>;
-        final reportId = data['id'] as int;
-        return await getReportById(reportId);
-      } else {
-        throw Exception('Invalid response format');
+      if (responseData is Map<String, dynamic> &&
+          responseData.containsKey('data')) {
+        return responseData['data'] as Map<String, dynamic>;
       }
-    } on DioException catch (e) {
+
+      throw Exception('Invalid response format');
+    } on DioException {
       rethrow;
     } catch (e) {
       throw Exception('Failed to create report: ${e.toString()}');
     }
   }
 
-  /// Delete a report by ID
-  /// New API endpoint: DELETE /api/reports/{id}
   Future<void> deleteReport(int id) async {
     try {
-      final response = await _dioService.dio.delete('${ApiConstants.reports}/$id');
-
-      final responseData = response.data;
-      // New API returns: { "message": "Report deleted successfully" }
-      if (responseData is Map<String, dynamic>) {
-        final message = responseData[ApiConstants.message] as String?;
-        print('✅ Report deleted: $message');
-      }
-    } on DioException catch (e) {
+      await _dioService.dio.delete('${ApiConstants.reports}/$id');
+    } on DioException {
       rethrow;
     } catch (e) {
       throw Exception('Failed to delete report: ${e.toString()}');

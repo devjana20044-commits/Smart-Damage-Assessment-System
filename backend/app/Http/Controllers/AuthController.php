@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Login user and create token.
-     */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
@@ -28,20 +25,14 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Revoke all existing tokens (optional: remove for multi-device)
-        // $user->tokens()->delete();
-
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'user' => $user,
+            'user' => UserResource::make($user)->resolve(),
         ]);
     }
 
-    /**
-     * Register new user and create token.
-     */
     public function register(Request $request): JsonResponse
     {
         $request->validate([
@@ -54,20 +45,17 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'user',
+            'role' => 'field_user',
         ]);
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'user' => $user,
-        ]);
+            'user' => UserResource::make($user)->resolve(),
+        ], 201);
     }
 
-    /**
-     * Logout user (revoke current token).
-     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -77,11 +65,10 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get the authenticated user.
-     */
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        return response()->json(
+            UserResource::make($request->user())->resolve()
+        );
     }
 }
