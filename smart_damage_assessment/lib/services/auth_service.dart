@@ -156,4 +156,43 @@ class AuthService {
       throw Exception('Failed to fetch current user: ${e.toString()}');
     }
   }
+
+  Future<User> updateProfile({
+    required String name,
+    required String email,
+    String? currentPassword,
+    String? newPassword,
+    String? newPasswordConfirmation,
+  }) async {
+    try {
+      final data = <String, dynamic>{'name': name, 'email': email};
+      if (currentPassword != null && currentPassword.isNotEmpty) {
+        data['current_password'] = currentPassword;
+      }
+      if (newPassword != null && newPassword.isNotEmpty) {
+        data['password'] = newPassword;
+        data['password_confirmation'] = newPasswordConfirmation ?? '';
+      }
+
+      final response = await _dioService.dio.put(ApiConstants.me, data: data);
+
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        final userData =
+            responseData['user'] as Map<String, dynamic>? ?? responseData;
+        final user = User.fromJson(userData);
+        await _storageService.saveUser(user);
+        return user;
+      } else {
+        throw Exception('Invalid response format');
+      }
+    } on DioException catch (e) {
+      final message = e.error is String
+          ? e.error as String
+          : 'Failed to update profile.';
+      throw Exception(message);
+    } catch (e) {
+      throw Exception('Failed to update profile: ${e.toString()}');
+    }
+  }
 }

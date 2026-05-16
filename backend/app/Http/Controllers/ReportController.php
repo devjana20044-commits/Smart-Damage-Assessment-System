@@ -96,6 +96,61 @@ class ReportController extends Controller
         );
     }
 
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $report = $request->user()->reports()->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'raw_location' => 'sometimes|string|max:255',
+            'raw_description' => 'nullable|string|max:2000',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'image' => 'nullable|image|max:10240',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
+            'pdf_file' => 'nullable|mimes:pdf|max:20480',
+            'video_links' => 'nullable|array',
+            'video_links.*' => 'nullable|url',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = array_filter($validator->validated(), function ($value) {
+            return $value !== null;
+        });
+
+        $imagePaths = $report->images ?? [];
+        
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('reports/images', 'public');
+            }
+            $data['images'] = $imagePaths;
+        }
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('reports/images', 'public');
+        }
+
+        if ($request->hasFile('pdf_file')) {
+            $data['pdf_file'] = $request->file('pdf_file')->store('reports/docs', 'public');
+        }
+
+        if ($request->has('video_links')) {
+            $data['video_links'] = $request->input('video_links');
+        }
+
+        $report->update($data);
+
+        return response()->json([
+            'data' => ReportResource::make($report->fresh())->resolve(),
+        ]);
+    }
+
     public function destroy(Request $request, int $id): JsonResponse
     {
         $report = $request->user()->reports()->findOrFail($id);

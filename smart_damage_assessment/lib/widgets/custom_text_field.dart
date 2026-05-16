@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/theme.dart';
 
 /// Custom text field widget with validation support
 class CustomTextField extends StatefulWidget {

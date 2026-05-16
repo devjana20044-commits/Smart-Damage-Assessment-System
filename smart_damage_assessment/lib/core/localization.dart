@@ -190,6 +190,69 @@ class AppLocalizations {
       'invalidIP': 'Please enter a valid IP address',
       'invalidPort': 'Please enter a valid port number (1-65535)',
       'pathMustStartWithSlash': 'Path must start with /',
+      'ipChangedRelogin': 'IP address changed - please log in again',
+      'saveSettingsFailed': 'Failed to save settings',
+      'connectionTimeout': 'Connection timed out',
+      'checkIpAndPort': 'Please check the IP address and port number.',
+      'connectionError': 'Connection error',
+      'settingsReset': 'Settings have been reset',
+      'connectedSuccessfully': 'Connected successfully!',
+      'ok': 'OK',
+      'ipExample': 'e.g., 192.168.1.100',
+      'enterIP': 'Please enter IP address',
+      'portExample': 'e.g., 8000',
+      'enterPort': 'Please enter port number',
+      'enterPath': 'Please enter path',
+      'pathExample': 'e.g., /api',
+      'settingsSavedSuccess': 'Settings saved successfully!',
+      'connected': 'Connected',
+      'disconnected': 'Disconnected',
+      'tapToTest': 'Tap "Test Connection" to verify',
+      'fullUrlTitle': 'Full URL Address',
+      'serverSettings': 'Server Settings',
+
+      // Report Details Redesign
+      'projectDetails': 'Report Details',
+      'primarySite': 'Primary Site',
+      'surveyDate': 'Survey Date',
+      'reportId': 'Report ID',
+      'viewOnMap': 'View on Map',
+      'assessmentProgress': 'Assessment Progress',
+      'verified': 'Verified',
+      'aiEstimated': 'AI Estimated',
+      'updateReport': 'Update Report',
+      'exportPdf': 'Export PDF',
+      'priority': 'Priority',
+      'geographicalContext': 'Geographical Context',
+
+      // Home Screen Redesign
+      'searchReports': 'Search reports...',
+      'details': 'Details',
+      'home': 'Home',
+      'map': 'Map',
+      'noMatchingReports': 'No matching reports',
+      'editProfile': 'Edit Profile',
+      'editProfileTitle': 'Edit Account Information',
+      'currentPassword': 'Current Password',
+      'newPassword': 'New Password',
+      'confirmNewPassword': 'Confirm New Password',
+      'passwordChangeOptional': 'Leave empty to keep current password',
+      'profileUpdated': 'Profile updated successfully',
+      'technicalProgress': 'Technical Progress',
+      'aiCalculation': 'AI Calculation',
+      'automatedProgress': 'Automated Progress',
+      'manualVerification': 'Manual Verification',
+      'shareReport': 'Share',
+      'updateTechnicalReport': 'Update Technical Report',
+      'inspectionDate': 'Inspection Date',
+
+      // Drafts
+      'drafts': 'Drafts',
+      'saveDraft': 'Save Draft',
+      'noDraftsYet': 'No Drafts Yet',
+      'draftsHint': 'Save reports as drafts to send them later when you have internet',
+      'draftSaved': 'Draft saved successfully',
+      'draftDeleted': 'Draft deleted successfully',
     },
     'ar': {
       // App Title
@@ -367,6 +430,69 @@ class AppLocalizations {
       'invalidIP': 'يرجى إدخال عنوان IP صحيح',
       'invalidPort': 'يرجى إدخال رقم منفذ صحيح (1-65535)',
       'pathMustStartWithSlash': 'يجب أن يبدأ المسار بـ /',
+      'ipChangedRelogin': 'تم تغيير عنوان IP - يرجى تسجيل الدخول مرة أخرى',
+      'saveSettingsFailed': 'فشل حفظ الإعدادات',
+      'connectionTimeout': 'انتهت مهلة الاتصال',
+      'checkIpAndPort': 'يرجى التحقق من عنوان IP ورقم المنفذ.',
+      'connectionError': 'خطأ في الاتصال',
+      'settingsReset': 'تم إعادة تعيين الإعدادات',
+      'connectedSuccessfully': 'متصل بنجاح!',
+      'ok': 'حسناً',
+      'ipExample': 'مثال: 192.168.1.100',
+      'enterIP': 'يرجى إدخال عنوان IP',
+      'portExample': 'مثال: 8000',
+      'enterPort': 'يرجى إدخال رقم المنفذ',
+      'enterPath': 'يرجى إدخال المسار',
+      'pathExample': 'مثال: /api',
+      'settingsSavedSuccess': 'تم حفظ الإعدادات بنجاح!',
+      'connected': 'متصل',
+      'disconnected': 'غير متصل',
+      'tapToTest': 'اضغط "اختبار الاتصال" للتحقق',
+      'fullUrlTitle': 'عنوان URL الكامل',
+      'serverSettings': 'إعدادات السيرفر',
+
+      // Report Details Redesign
+      'projectDetails': 'تفاصيل التقرير',
+      'primarySite': 'الموقع الرئيسي',
+      'surveyDate': 'تاريخ المسح',
+      'reportId': 'رقم التقرير',
+      'viewOnMap': 'عرض على الخريطة',
+      'assessmentProgress': 'تقدم التقييم',
+      'verified': 'مثبت',
+      'aiEstimated': 'تقدير الذكاء الاصطناعي',
+      'updateReport': 'تحديث التقرير',
+      'exportPdf': 'تصدير PDF',
+      'priority': 'الأولوية',
+      'geographicalContext': 'السياق الجغرافي',
+
+      // Home Screen Redesign
+      'searchReports': 'البحث في التقارير...',
+      'details': 'التفاصيل',
+      'home': 'الرئيسية',
+      'map': 'الخريطة',
+      'noMatchingReports': 'لا توجد تقارير مطابقة',
+      'editProfile': 'تعديل الملف الشخصي',
+      'editProfileTitle': 'تعديل معلومات الحساب',
+      'currentPassword': 'كلمة المرور الحالية',
+      'newPassword': 'كلمة المرور الجديدة',
+      'confirmNewPassword': 'تأكيد كلمة المرور الجديدة',
+      'passwordChangeOptional': 'اتركها فارغة للإبقاء على كلمة المرور الحالية',
+      'profileUpdated': 'تم تحديث الملف الشخصي بنجاح',
+      'technicalProgress': 'نسبة الإنجاز التقني',
+      'aiCalculation': 'حساب ذكاء اصطناعي',
+      'automatedProgress': 'إنجاز آلي',
+      'manualVerification': 'تحقق يدوي',
+      'shareReport': 'مشاركة',
+      'updateTechnicalReport': 'تحديث التقرير الفني',
+      'inspectionDate': 'تاريخ الفحص',
+
+      // Drafts
+      'drafts': 'المسودات',
+      'saveDraft': 'حفظ كمسودة',
+      'noDraftsYet': 'لا توجد مسودات بعد',
+      'draftsHint': 'احفظ التقارير كمسودات لإرسالها لاحقاً عند توفر الإنترنت',
+      'draftSaved': 'تم حفظ المسودة بنجاح',
+      'draftDeleted': 'تم حذف المسودة بنجاح',
     },
   };
 
@@ -481,6 +607,80 @@ class AppLocalizations {
   String get takePhoto => translate('takePhoto');
   String get submitReport => translate('submitReport');
   String get error => translate('error');
+  String get ipChangedRelogin => translate('ipChangedRelogin');
+  String get saveSettingsFailed => translate('saveSettingsFailed');
+  String get connectionTimeout => translate('connectionTimeout');
+  String get checkIpAndPort => translate('checkIpAndPort');
+  String get connectionError => translate('connectionError');
+  String get settingsReset => translate('settingsReset');
+  String get connectedSuccessfully => translate('connectedSuccessfully');
+  String get ok => translate('ok');
+  String get ipExample => translate('ipExample');
+  String get enterIP => translate('enterIP');
+  String get portExample => translate('portExample');
+  String get enterPort => translate('enterPort');
+  String get enterPath => translate('enterPath');
+  String get pathExample => translate('pathExample');
+  String get settingsSavedSuccess => translate('settingsSavedSuccess');
+  String get connected => translate('connected');
+  String get disconnected => translate('disconnected');
+  String get tapToTest => translate('tapToTest');
+  String get fullUrlTitle => translate('fullUrlTitle');
+  String get serverSettings => translate('serverSettings');
+  String get projectDetails => translate('projectDetails');
+  String get primarySite => translate('primarySite');
+  String get surveyDate => translate('surveyDate');
+  String get reportId => translate('reportId');
+  String get viewOnMap => translate('viewOnMap');
+  String get assessmentProgress => translate('assessmentProgress');
+  String get verified => translate('verified');
+  String get aiEstimated => translate('aiEstimated');
+  String get updateReport => translate('updateReport');
+  String get exportPdf => translate('exportPdf');
+  String get priority => translate('priority');
+  String get geographicalContext => translate('geographicalContext');
+  String get searchReports => translate('searchReports');
+  String get details => translate('details');
+  String get home => translate('home');
+  String get map => translate('map');
+  String get noMatchingReports => translate('noMatchingReports');
+  String get editProfile => translate('editProfile');
+  String get editProfileTitle => translate('editProfileTitle');
+  String get currentPassword => translate('currentPassword');
+  String get newPassword => translate('newPassword');
+  String get confirmNewPassword => translate('confirmNewPassword');
+  String get passwordChangeOptional => translate('passwordChangeOptional');
+  String get profileUpdated => translate('profileUpdated');
+  String get technicalProgress => translate('technicalProgress');
+  String get aiCalculation => translate('aiCalculation');
+  String get automatedProgress => translate('automatedProgress');
+  String get manualVerification => translate('manualVerification');
+  String get shareReport => translate('shareReport');
+  String get updateTechnicalReport => translate('updateTechnicalReport');
+  String get inspectionDate => translate('inspectionDate');
+  String get fullName => translate('fullName');
+  String get invalidEmail => translate('invalidEmail');
+  String get passwordTooShort => translate('passwordTooShort');
+  String get passwordsDoNotMatch => translate('passwordsDoNotMatch');
+  String get backendConfiguration => translate('backendConfiguration');
+  String get ipAddress => translate('ipAddress');
+  String get port => translate('port');
+  String get path => translate('path');
+  String get testConnection => translate('testConnection');
+  String get reset => translate('reset');
+  String get saveSettings => translate('saveSettings');
+  String get fullUrl => translate('fullUrl');
+  String get connectionSuccess => translate('connectionSuccess');
+  String get connectionFailed => translate('connectionFailed');
+  String get invalidIP => translate('invalidIP');
+  String get invalidPort => translate('invalidPort');
+  String get pathMustStartWithSlash => translate('pathMustStartWithSlash');
+  String get drafts => translate('drafts');
+  String get saveDraft => translate('saveDraft');
+  String get noDraftsYet => translate('noDraftsYet');
+  String get draftsHint => translate('draftsHint');
+  String get draftSaved => translate('draftSaved');
+  String get draftDeleted => translate('draftDeleted');
 }
 
 /// Localizations delegate for Flutter

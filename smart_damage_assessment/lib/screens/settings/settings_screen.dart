@@ -92,10 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         // IP changed - clear auth data and reports
         await storage.removeToken();
         await storage.removeUser();
-        _showSnackBar(
-          'تم تغيير عنوان IP - يرجى تسجيل الدخول مرة أخرى',
-          isSuccess: true,
-        );
+        _showSnackBar(context.loc.ipChangedRelogin, isSuccess: true);
       }
 
       await storage.saveBackendConfig(
@@ -125,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar('فشل حفظ الإعدادات: $e', isSuccess: false);
+      _showSnackBar('${context.loc.saveSettingsFailed}: $e', isSuccess: false);
     }
   }
 
@@ -158,19 +155,19 @@ class _SettingsScreenState extends State<SettingsScreen>
       setState(() {
         _isLoading = false;
         _connectionStatus = false;
-        _connectionMessage = 'انتهت مهلة الاتصال';
+        _connectionMessage = context.loc.connectionTimeout;
       });
       _showErrorDialog(
-        'انتهت مهلة الاتصال',
-        'يرجى التحقق من عنوان IP ورقم المنفذ.',
+        context.loc.connectionTimeout,
+        context.loc.checkIpAndPort,
       );
     } catch (e) {
       setState(() {
         _isLoading = false;
         _connectionStatus = false;
-        _connectionMessage = 'خطأ في الاتصال';
+        _connectionMessage = context.loc.connectionError;
       });
-      _showErrorDialog('فشل الاتصال', e.toString());
+      _showErrorDialog(context.loc.connectionFailed, e.toString());
     }
   }
 
@@ -183,7 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       _connectionStatus = false;
       _connectionMessage = null;
     });
-    _showSnackBar('تم إعادة تعيين الإعدادات', isSuccess: true);
+    _showSnackBar(context.loc.settingsReset, isSuccess: true);
   }
 
   void _showSnackBar(String message, {required bool isSuccess}) {
@@ -229,17 +226,19 @@ class _SettingsScreenState extends State<SettingsScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isSuccess
-                        ? [Colors.green.shade400, Colors.green.shade600]
-                        : [Colors.red.shade400, Colors.red.shade600],
+                        ? [AppTheme.successColor, AppTheme.successColor]
+                        : [AppTheme.errorColor, AppTheme.errorColor],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (isSuccess ? Colors.green : Colors.red).withValues(
-                        alpha: 0.4,
-                      ),
+                      color:
+                          (isSuccess
+                                  ? AppTheme.successColor
+                                  : AppTheme.errorColor)
+                              .withValues(alpha: 0.4),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -253,7 +252,9 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                isSuccess ? 'متصل بنجاح!' : 'فشل الاتصال',
+                isSuccess
+                    ? context.loc.connectedSuccessfully
+                    : context.loc.connectionFailed,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -275,7 +276,9 @@ class _SettingsScreenState extends State<SettingsScreen>
               Text(
                 'Status Code: ${response.statusCode}',
                 style: TextStyle(
-                  color: isSuccess ? Colors.green : Colors.red,
+                  color: isSuccess
+                      ? AppTheme.successColor
+                      : AppTheme.errorColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -285,14 +288,16 @@ class _SettingsScreenState extends State<SettingsScreen>
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isSuccess ? Colors.green : Colors.red,
+                    backgroundColor: isSuccess
+                        ? AppTheme.successColor
+                        : AppTheme.errorColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('حسناً'),
+                  child: Text(context.loc.ok),
                 ),
               ),
             ],
@@ -312,20 +317,23 @@ class _SettingsScreenState extends State<SettingsScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: AppTheme.errorColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.error_outline, color: Colors.red),
+              child: const Icon(
+                Icons.error_outline,
+                color: AppTheme.errorColor,
+              ),
             ),
             const SizedBox(width: 12),
-            Text(title),
+            Expanded(child: Text(title)),
           ],
         ),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('حسناً'),
+            child: Text(context.loc.ok),
           ),
         ],
       ),
@@ -454,14 +462,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                   )
                 else ...[
                   // Connection Status Card
-                  _buildConnectionStatusCard(theme),
+                  _buildConnectionStatusCard(theme, loc),
                   const SizedBox(height: 24),
 
                   // Server Configuration Section
                   _buildSectionHeader(
                     context,
                     icon: Icons.dns_outlined,
-                    title: 'إعدادات السيرفر',
+                    title: loc.serverSettings,
                     color: AppTheme.primaryColor,
                   ),
                   const SizedBox(height: 16),
@@ -472,19 +480,19 @@ class _SettingsScreenState extends State<SettingsScreen>
                         _buildInputCard(
                           context,
                           controller: _ipController,
-                          label: 'عنوان IP',
-                          hint: 'مثال: 192.168.1.100',
+                          label: loc.ipAddress,
+                          hint: loc.ipExample,
                           icon: Icons.computer_outlined,
-                          color: Colors.blue,
+                          color: AppTheme.softCyan,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'يرجى إدخال عنوان IP';
+                              return loc.enterIP;
                             }
                             final ipPattern = RegExp(
                               r'^(\d{1,3}\.){3}\d{1,3}$',
                             );
                             if (!ipPattern.hasMatch(value.trim())) {
-                              return 'يرجى إدخال عنوان IP صحيح';
+                              return loc.invalidIP;
                             }
                             return null;
                           },
@@ -493,18 +501,18 @@ class _SettingsScreenState extends State<SettingsScreen>
                         _buildInputCard(
                           context,
                           controller: _portController,
-                          label: 'رقم المنفذ',
-                          hint: 'مثال: 8000',
+                          label: loc.port,
+                          hint: loc.portExample,
                           icon: Icons.settings_ethernet,
-                          color: Colors.orange,
+                          color: AppTheme.mutedGold,
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'يرجى إدخال رقم المنفذ';
+                              return loc.enterPort;
                             }
                             final port = int.tryParse(value.trim());
                             if (port == null || port < 1 || port > 65535) {
-                              return 'يرجى إدخال رقم منفذ صحيح (1-65535)';
+                              return loc.invalidPort;
                             }
                             return null;
                           },
@@ -513,16 +521,16 @@ class _SettingsScreenState extends State<SettingsScreen>
                         _buildInputCard(
                           context,
                           controller: _pathController,
-                          label: 'المسار',
-                          hint: 'مثال: /api',
+                          label: loc.path,
+                          hint: loc.pathExample,
                           icon: Icons.folder_outlined,
-                          color: Colors.purple,
+                          color: AppTheme.damageHigh,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'يرجى إدخال المسار';
+                              return loc.enterPath;
                             }
                             if (!value.trim().startsWith('/')) {
-                              return 'يجب أن يبدأ المسار بـ /';
+                              return loc.pathMustStartWithSlash;
                             }
                             return null;
                           },
@@ -533,13 +541,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                   const SizedBox(height: 24),
 
                   // URL Preview Card
-                  _buildUrlPreviewCard(theme),
+                  _buildUrlPreviewCard(theme, loc),
                   const SizedBox(height: 32),
 
                   // Action Buttons
                   _buildActionButton(
                     context,
-                    label: 'حفظ الإعدادات',
+                    label: loc.saveSettings,
                     icon: Icons.save_outlined,
                     color: AppTheme.successColor,
                     onPressed: _saveSettings,
@@ -547,7 +555,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                   const SizedBox(height: 12),
                   _buildActionButton(
                     context,
-                    label: 'اختبار الاتصال',
+                    label: loc.testConnection,
                     icon: Icons.wifi_find_outlined,
                     color: AppTheme.accentColor,
                     onPressed: _testConnection,
@@ -555,9 +563,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                   const SizedBox(height: 12),
                   _buildActionButton(
                     context,
-                    label: 'إعادة تعيين',
+                    label: loc.reset,
                     icon: Icons.refresh_outlined,
-                    color: Colors.grey,
+                    color: AppTheme.textSecondary,
                     onPressed: _resetSettings,
                   ),
 
@@ -569,14 +577,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.green.shade400,
-                            Colors.green.shade600,
+                            AppTheme.successColor,
+                            AppTheme.successColor,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.green.withValues(alpha: 0.3),
+                            color: AppTheme.successColor.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -596,9 +604,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'تم حفظ الإعدادات بنجاح!',
+                              loc.settingsSavedSuccess,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -620,23 +628,25 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _buildConnectionStatusCard(ThemeData theme) {
+  Widget _buildConnectionStatusCard(ThemeData theme, AppLocalizations loc) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: _connectionStatus
-              ? [Colors.green.shade400, Colors.green.shade600]
-              : [Colors.grey.shade300, Colors.grey.shade400],
+              ? [AppTheme.successColor, AppTheme.successColor]
+              : [AppTheme.divider, AppTheme.divider],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (_connectionStatus ? Colors.green : Colors.grey).withValues(
-              alpha: 0.3,
-            ),
+            color:
+                (_connectionStatus
+                        ? AppTheme.successColor
+                        : AppTheme.textSecondary)
+                    .withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -663,7 +673,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _connectionStatus ? 'متصل' : 'غير متصل',
+                  _connectionStatus ? loc.connected : loc.disconnected,
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -671,7 +681,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _connectionMessage ?? 'اضغط "اختبار الاتصال" للتحقق',
+                  _connectionMessage ?? loc.tapToTest,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 13,
@@ -782,7 +792,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _buildUrlPreviewCard(ThemeData theme) {
+  Widget _buildUrlPreviewCard(ThemeData theme, AppLocalizations loc) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -807,7 +817,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               Icon(Icons.link, color: theme.colorScheme.primary, size: 20),
               const SizedBox(width: 8),
               Text(
-                'عنوان URL الكامل',
+                loc.fullUrlTitle,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,

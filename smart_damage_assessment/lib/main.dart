@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/localization.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/draft_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/report_provider.dart';
 import 'screens/splash/splash_screen.dart';
@@ -14,6 +15,7 @@ import 'screens/report/create_report_screen.dart';
 
 import 'services/auth_service.dart';
 import 'services/dio_service.dart';
+import 'services/draft_service.dart';
 import 'services/report_service.dart';
 import 'services/storage_service.dart';
 
@@ -25,9 +27,11 @@ void main() async {
 
   final authService = AuthService(dioService, storageService);
   final reportService = ReportService(dioService);
+  final draftService = DraftService();
 
   final authProvider = AuthProvider(authService, storageService, dioService);
   final reportProvider = ReportProvider(reportService);
+  final draftProvider = DraftProvider(draftService);
 
   await authProvider.initialize();
 
@@ -38,6 +42,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
         ChangeNotifierProvider.value(value: reportProvider),
+        ChangeNotifierProvider.value(value: draftProvider),
         ChangeNotifierProvider.value(value: localeProvider),
       ],
       child: const SmartDamageAssessmentApp(),

@@ -20,5 +20,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    Route::apiResource('reports', ReportController::class)->except(['update']);
+    Route::apiResource('reports', ReportController::class);
 });

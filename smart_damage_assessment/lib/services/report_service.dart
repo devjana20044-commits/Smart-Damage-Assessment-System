@@ -127,6 +127,89 @@ class ReportService {
     }
   }
 
+  Future<Report> updateReport({
+    required int id,
+    String? rawLocation,
+    String? rawDescription,
+    double? latitude,
+    double? longitude,
+    File? singleImage,
+    List<File>? images,
+    File? pdfFile,
+    List<String>? videoLinks,
+    List<String>? remainingOldImages,
+  }) async {
+    try {
+      final Map<String, dynamic> formDataMap = {
+        '_method': 'PUT',
+      };
+      
+      if (rawLocation != null) formDataMap[ApiConstants.rawLocation] = rawLocation;
+      if (rawDescription != null && rawDescription.isNotEmpty) formDataMap[ApiConstants.rawDescription] = rawDescription;
+      if (latitude != null) formDataMap[ApiConstants.latitude] = latitude.toString();
+      if (longitude != null) formDataMap[ApiConstants.longitude] = longitude.toString();
+
+      if (remainingOldImages != null) {
+        for (int i = 0; i < remainingOldImages.length; i++) {
+          formDataMap['remaining_old_images[$i]'] = remainingOldImages[i];
+        }
+      }
+
+      if (images != null && images.isNotEmpty) {
+        formDataMap[ApiConstants.images] = await Future.wait(
+          images.map(
+            (img) => MultipartFile.fromFile(
+              img.path,
+              filename: img.path.split('/').last,
+            ),
+          ),
+        );
+      } else if (singleImage != null) {
+        formDataMap[ApiConstants.image] = await MultipartFile.fromFile(
+          singleImage.path,
+          filename: singleImage.path.split('/').last,
+        );
+      }
+
+      if (pdfFile != null) {
+        formDataMap[ApiConstants.pdfFile] = await MultipartFile.fromFile(
+          pdfFile.path,
+          filename: pdfFile.path.split('/').last,
+        );
+      }
+
+      if (videoLinks != null && videoLinks.isNotEmpty) {
+        formDataMap[ApiConstants.videoLinks] = videoLinks;
+      }
+
+      final formData = FormData.fromMap(formDataMap);
+
+      final response = await _dioService.dio.post(
+        '${ApiConstants.reports}/$id',
+        data: formData,
+        options: Options(
+          headers: {
+            ApiConstants.contentType: ApiConstants.multipartContentType,
+          },
+        ),
+      );
+
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
+        return Report.fromJson(responseData['data'] as Map<String, dynamic>);
+      }
+      if (responseData is Map<String, dynamic>) {
+        return Report.fromJson(responseData);
+      }
+
+      throw Exception('Invalid response format');
+    } on DioException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Failed to update report: ${e.toString()}');
+    }
+  }
+
   Future<void> deleteReport(int id) async {
     try {
       await _dioService.dio.delete('${ApiConstants.reports}/$id');

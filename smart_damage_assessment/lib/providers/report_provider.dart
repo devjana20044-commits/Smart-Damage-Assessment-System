@@ -134,6 +134,49 @@ class ReportProvider with ChangeNotifier {
   List<Report> get completedReports => getReportsByStatus('completed');
   List<Report> get rejectedReports => getReportsByStatus('rejected');
 
+  Future<bool> updateReport({
+    required int reportId,
+    String? rawLocation,
+    String? rawDescription,
+    double? latitude,
+    double? longitude,
+    File? singleImage,
+    List<File>? images,
+    File? pdfFile,
+    List<String>? videoLinks,
+    List<String>? remainingOldImages,
+  }) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final updatedReport = await _reportService.updateReport(
+        id: reportId,
+        rawLocation: rawLocation,
+        rawDescription: rawDescription,
+        latitude: latitude,
+        longitude: longitude,
+        singleImage: singleImage,
+        images: images,
+        pdfFile: pdfFile,
+        videoLinks: videoLinks,
+        remainingOldImages: remainingOldImages,
+      );
+      _currentReport = updatedReport;
+      final index = _reports.indexWhere((r) => r.id == reportId);
+      if (index != -1) {
+        _reports[index] = updatedReport;
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> deleteReport(int reportId) async {
     _setLoading(true);
     _clearError();

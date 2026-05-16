@@ -53,9 +53,6 @@ dependencies:
   # Local storage
   shared_preferences: ^2.2.2
 
-  # Maps (optional)
-  google_maps_flutter: ^2.5.3
-
   # Permissions
   permission_handler: ^11.2.0
 
@@ -67,6 +64,8 @@ dependencies:
 
   # URL launcher for opening links
   url_launcher: ^6.2.2
+  webview_flutter: ^4.13.1
+  google_fonts: ^8.0.2
 
 dev_dependencies:
   flutter_test:

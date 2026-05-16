@@ -7,7 +7,9 @@ import '../services/storage_service.dart';
 /// Provider for managing authentication state
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
+  // ignore: unused_field
   final StorageService _storageService;
+  // ignore: unused_field
   final DioService _dioService;
 
   User? _user;
@@ -117,6 +119,33 @@ class AuthProvider with ChangeNotifier {
   /// Clear error message
   void clearError() {
     _clearError();
+  }
+
+  Future<bool> updateProfile({
+    required String name,
+    required String email,
+    String? currentPassword,
+    String? newPassword,
+    String? newPasswordConfirmation,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      _user = await _authService.updateProfile(
+        name: name,
+        email: email,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        newPasswordConfirmation: newPasswordConfirmation,
+      );
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
   }
 
   /// Private helper methods

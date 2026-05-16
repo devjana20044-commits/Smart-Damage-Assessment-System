@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/localization.dart';
+import '../../core/theme.dart';
 import '../../models/report.dart';
 import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
@@ -9,10 +11,11 @@ import '../../providers/report_provider.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../widgets/report_card.dart';
 import '../auth/login_screen.dart';
+import '../auth/edit_profile_screen.dart';
+import '../drafts/drafts_screen.dart';
 import '../report/create_report_screen.dart';
 import '../report/report_details_screen.dart';
 import '../settings/settings_screen.dart';
-import '../statistics/statistics_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,14 +26,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  Set<ReportStatus> _selectedStatuses = {};
-  Set<DamageLevel> _selectedDamageLevels = {};
+  final Set<ReportStatus> _selectedStatuses = {};
+  final Set<DamageLevel> _selectedDamageLevels = {};
   bool _showFilters = false;
 
   @override
   void initState() {
     super.initState();
-    // Load reports when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ReportProvider>().fetchReports();
     });
@@ -42,49 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _logout() async {
-    final loc = context.loc;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(loc.logout),
-        content: Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(loc.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(loc.logout),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      final authProvider = context.read<AuthProvider>();
-      await authProvider.logout();
-
-      // Navigate to login screen
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
-  }
-
   void _navigateToCreateReport() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const CreateReportScreen()),
-    ).then((_) {
-      // Refresh reports when returning from create screen
-      if (mounted) {
-        context.read<ReportProvider>().fetchReports();
-      }
-    });
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const CreateReportScreen()))
+        .then((_) {
+          if (mounted) {
+            context.read<ReportProvider>().fetchReports();
+          }
+        });
   }
 
   void _navigateToReportDetails(int reportId) {
@@ -99,33 +66,27 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
+        backgroundColor: AppTheme.errorColor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   List<Report> _filterReports(List<Report> reports) {
     String query = _searchController.text.toLowerCase();
-    
     return reports.where((report) {
-      // Text search (case-insensitive)
-      bool matchesSearch = query.isEmpty ||
+      bool matchesSearch =
+          query.isEmpty ||
           report.location.raw.toLowerCase().contains(query) ||
           report.description.raw.toLowerCase().contains(query) ||
           report.id.toString().contains(query);
-      
-      // Status filter
-      bool matchesStatus = _selectedStatuses.isEmpty ||
+      bool matchesStatus =
+          _selectedStatuses.isEmpty ||
           _selectedStatuses.contains(report.damageAssessment.status);
-      
-      // Damage level filter
-      bool matchesDamageLevel = _selectedDamageLevels.isEmpty ||
+      bool matchesDamageLevel =
+          _selectedDamageLevels.isEmpty ||
           _selectedDamageLevels.contains(report.damageAssessment.level);
-      
       return matchesSearch && matchesStatus && matchesDamageLevel;
     }).toList();
   }
@@ -141,11 +102,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
-    final theme = Theme.of(context);
+    final localeProvider = context.watch<LocaleProvider>();
+    final isArabic = localeProvider.isArabic;
     final authProvider = context.watch<AuthProvider>();
     final reportProvider = context.watch<ReportProvider>();
 
-    // Show error message if any
     if (reportProvider.errorMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showErrorSnackBar(reportProvider.errorMessage!);
@@ -153,208 +114,326 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
 
-    // Filter reports
     final filteredReports = _filterReports(reportProvider.reports);
-    final hasActiveFilters = _searchController.text.isNotEmpty ||
+    final hasActiveFilters =
+        _searchController.text.isNotEmpty ||
         _selectedStatuses.isNotEmpty ||
         _selectedDamageLevels.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.myReports),
-        actions: [
-          IconButton(
-            icon: Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
-            onPressed: () {
-              setState(() {
-                _showFilters = !_showFilters;
-              });
-            },
-            tooltip: loc.filter,
-          ),
-        ],
-      ),
-      drawer: _buildDrawer(context, loc, theme, authProvider.user),
-      body: RefreshIndicator(
-        onRefresh: () => reportProvider.fetchReports(),
-        child: reportProvider.isLoading && reportProvider.reports.isEmpty
-            ? LoadingIndicator(message: '${loc.loading}...')
-            : reportProvider.reports.isEmpty
-                ? _buildEmptyState(theme, loc)
-                : _buildReportsList(filteredReports, hasActiveFilters, loc, theme),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToCreateReport,
-        tooltip: loc.createReport,
-        child: const Icon(Icons.description),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme, AppLocalizations loc) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: theme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(60),
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFBF9F4),
+        drawer: _buildDrawer(context, loc, authProvider.user),
+        body: Column(
+          children: [
+            _buildAppBar(loc, authProvider.user),
+            Expanded(
+              child: reportProvider.isLoading && reportProvider.reports.isEmpty
+                  ? LoadingIndicator(message: '${loc.loading}...')
+                  : reportProvider.reports.isEmpty
+                  ? _buildEmptyState(loc)
+                  : _buildBody(filteredReports, hasActiveFilters, loc),
             ),
-            child: Icon(
-              Icons.camera_alt,
-              size: 60,
-              color: theme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            loc.noReportsYet,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            loc.startByCreating,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
+          ],
+        ),
+        floatingActionButton: SizedBox(
+          width: 56,
+          height: 56,
+          child: FloatingActionButton(
             onPressed: _navigateToCreateReport,
-            icon: const Icon(Icons.description),
-            label: Text(loc.createFirstReport),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReportsList(List<Report> reports, bool hasActiveFilters, AppLocalizations loc, ThemeData theme) {
-    return Column(
-      children: [
-        // Search Bar
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: loc.search,
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: theme.colorScheme.surface,
-            ),
-            onChanged: (_) => setState(() {}),
+            backgroundColor: const Color(0xFFB8895A),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add, size: 28),
           ),
         ),
-        
-        // Filters Section
-        if (_showFilters) _buildFiltersSection(loc, theme),
-        
-        // Clear Filters Button
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(AppLocalizations loc, User? user) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E293B),
+          border: Border(bottom: BorderSide(color: Color(0xFF334155))),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x0A000000),
+              offset: Offset(0, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          centerTitle: false,
+          leading: Builder(
+            builder: (ctx) {
+              return IconButton(
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+                icon: const Icon(Icons.menu, color: Colors.white),
+              );
+            },
+          ),
+          title: Text(
+            loc.myReports,
+            style: GoogleFonts.cairo(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: -0.01,
+            ),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12, left: 12),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF475569),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF64748B)),
+                ),
+                child: Center(
+                  child: Text(
+                    (user?.name ?? 'G').isNotEmpty
+                        ? user!.name[0].toUpperCase()
+                        : 'G',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    List<Report> reports,
+    bool hasActiveFilters,
+    AppLocalizations loc,
+  ) {
+    return Column(
+      children: [
+        _buildSearchBar(loc),
+        if (_showFilters) _buildFiltersSection(loc),
         if (hasActiveFilters)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
                 Text(
                   '${reports.length} ${loc.reports}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: const Color(0xFF44474D).withValues(alpha: 0.7),
                   ),
                 ),
                 const Spacer(),
-                TextButton.icon(
-                  onPressed: _clearFilters,
-                  icon: const Icon(Icons.clear_all),
-                  label: Text(loc.clear),
-                ),
-              ],
-            ),
-          ),
-        
-        // Reports List
-        Expanded(
-          child: reports.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                GestureDetector(
+                  onTap: _clearFilters,
+                  child: Row(
                     children: [
-                      Icon(
-                        Icons.search_off,
-                        size: 64,
-                        color: theme.colorScheme.onSurface.withOpacity(0.3),
+                      const Icon(
+                        Icons.clear_all,
+                        size: 16,
+                        color: Color(0xFF745A34),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(width: 4),
                       Text(
-                        'No matching reports',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        loc.clear,
+                        style: const TextStyle(
+                          color: Color(0xFF745A34),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: reports.length,
-                  itemBuilder: (context, index) {
-                    final report = reports[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ReportCard(
-                        report: report,
-                        onTap: () => _navigateToReportDetails(report.id),
-                      ),
-                    );
-                  },
                 ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () => context.read<ReportProvider>().fetchReports(),
+            child: reports.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: const Color(0xFF44474D).withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          loc.noMatchingReports,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(
+                              0xFF44474D,
+                            ).withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
+                    itemCount: reports.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: ReportCard(
+                          report: reports[index],
+                          isArabic: context.watch<LocaleProvider>().isArabic,
+                          onTap: () =>
+                              _navigateToReportDetails(reports[index].id),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildFiltersSection(AppLocalizations loc, ThemeData theme) {
+  Widget _buildSearchBar(AppLocalizations loc) {
+    final isArabic = context.watch<LocaleProvider>().isArabic;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: loc.searchReports,
+                  hintStyle: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF75777D),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF6F3EE),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 16,
+                  ),
+                  prefixIcon: isArabic
+                      ? null
+                      : const Padding(
+                          padding: EdgeInsets.only(left: 12, right: 4),
+                          child: Icon(
+                            Icons.search,
+                            size: 20,
+                            color: Color(0xFF75777D),
+                          ),
+                        ),
+                  suffixIcon: isArabic
+                      ? const Padding(
+                          padding: EdgeInsets.only(right: 12, left: 4),
+                          child: Icon(
+                            Icons.search,
+                            size: 20,
+                            color: Color(0xFF75777D),
+                          ),
+                        )
+                      : (_searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                },
+                              )
+                            : null),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFC5C6CD)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFC5C6CD)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF144C61),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: Material(
+              color: const Color(0xFFEAE8E3),
+              borderRadius: BorderRadius.circular(8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => setState(() => _showFilters = !_showFilters),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFC5C6CD)),
+                  ),
+                  child: const Icon(
+                    Icons.tune,
+                    size: 22,
+                    color: Color(0xFF172439),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFiltersSection(AppLocalizations loc) {
     return Container(
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor,
-            width: 1,
-          ),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE4E2DD)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status Filters
           Text(
-            'Status',
-            style: theme.textTheme.titleSmall?.copyWith(
+            loc.status,
+            style: const TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
+              color: Color(0xFF172439),
             ),
           ),
           const SizedBox(height: 8),
@@ -375,18 +454,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   });
                 },
-                selectedColor: theme.primaryColor.withOpacity(0.2),
-                checkmarkColor: theme.primaryColor,
+                selectedColor: AppTheme.navyCore.withValues(alpha: 0.15),
+                checkmarkColor: AppTheme.navyCore,
               );
             }).toList(),
           ),
           const SizedBox(height: 16),
-          
-          // Damage Level Filters
           Text(
             loc.damageLevels,
-            style: theme.textTheme.titleSmall?.copyWith(
+            style: const TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
+              color: Color(0xFF172439),
             ),
           ),
           const SizedBox(height: 8),
@@ -408,10 +487,70 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   });
                 },
-                selectedColor: color.withOpacity(0.2),
+                selectedColor: color.withValues(alpha: 0.2),
                 checkmarkColor: color,
               );
             }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AppLocalizations loc) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: AppTheme.navyCore.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.description_outlined,
+              size: 48,
+              color: AppTheme.navyCore.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            loc.noReportsYet,
+            style: const TextStyle(
+
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF172439),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48),
+            child: Text(
+              loc.startByCreating,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF44474D),
+                height: 20 / 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _navigateToCreateReport,
+            icon: const Icon(Icons.add, size: 20),
+            label: Text(loc.createFirstReport),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.navyCore,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
         ],
       ),
@@ -447,108 +586,230 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _getDamageLevelColor(DamageLevel level) {
     switch (level) {
       case DamageLevel.low:
-        return const Color(0xFF4CAF50);
+        return AppTheme.damageLow;
       case DamageLevel.medium:
-        return const Color(0xFFFF9800);
+        return AppTheme.damageMedium;
       case DamageLevel.high:
-        return const Color(0xFFF44336);
+        return AppTheme.damageHigh;
       case DamageLevel.critical:
-        return const Color(0xFF9C27B0);
+        return AppTheme.damageCritical;
     }
   }
 
-  Widget _buildDrawer(BuildContext context, AppLocalizations loc, ThemeData theme, User? user) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          // User Profile Header
-          UserAccountsDrawerHeader(
-            accountName: Text(user?.name ?? 'Guest'),
-            accountEmail: Text(user?.email ?? ''),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: theme.primaryColor,
-              child: Text(
-                (user?.name ?? 'Guest').isNotEmpty
-                    ? user!.name[0].toUpperCase()
-                    : 'G',
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            decoration: BoxDecoration(
-              color: theme.primaryColor,
-            ),
+  Future<void> _logout() async {
+    final loc = context.loc;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(loc.logout),
+        content: Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(loc.cancel),
           ),
-          const Divider(),
-          
-          // Menu Items
-          ListTile(
-            leading: const Icon(Icons.description),
-            title: Text(loc.myReports),
-            onTap: () {
-              Navigator.pop(context);
-            },
-            selected: true,
-          ),
-          ListTile(
-            leading: const Icon(Icons.bar_chart),
-            title: Text(loc.statistics),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const StatisticsScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: Text(loc.settings),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-          const Divider(),
-          
-          // Language Toggle
-          Consumer<LocaleProvider>(
-            builder: (context, localeProvider, child) {
-              return ListTile(
-                leading: const Icon(Icons.language),
-                title: Text(loc.language),
-                trailing: Switch(
-                  value: localeProvider.isArabic,
-                  onChanged: (value) {
-                    localeProvider.changeLocale(
-                      value ? const Locale('ar') : const Locale('en'),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-          
-          const Divider(),
-          
-          // Logout
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: Text(
-              loc.logout,
-              style: const TextStyle(color: Colors.red),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              _logout();
-            },
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+            child: Text(loc.logout),
           ),
         ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.logout();
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+  }
+
+  Widget _buildDrawer(BuildContext context, AppLocalizations loc, User? user) {
+    return Drawer(
+      backgroundColor: const Color(0xFF1E293B),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF475569),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF64748B),
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        (user?.name ?? 'G').isNotEmpty
+                            ? user!.name[0].toUpperCase()
+                            : 'G',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.name ?? 'Guest',
+                          style: const TextStyle(
+              
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user?.email ?? '',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EditProfileScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Divider(color: Colors.white.withValues(alpha: 0.15)),
+            const SizedBox(height: 16),
+            _buildDrawerButton(Icons.settings, loc.settings, () {
+              Navigator.pop(context);
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            }),
+            const SizedBox(height: 8),
+            _buildDrawerButton(Icons.drafts, loc.drafts, () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DraftsScreen()),
+              );
+            }),
+            const SizedBox(height: 8),
+            _buildDrawerButton(Icons.add_circle_outline, loc.createReport, () {
+              Navigator.pop(context);
+              _navigateToCreateReport();
+            }),
+            const SizedBox(height: 8),
+            Consumer<LocaleProvider>(
+              builder: (context, localeProvider, child) {
+                return _buildDrawerButton(
+                  Icons.translate,
+                  localeProvider.isArabic ? 'English' : 'العربية',
+                  () {
+                    localeProvider.changeLocale(
+                      localeProvider.isArabic
+                          ? const Locale('en')
+                          : const Locale('ar'),
+                    );
+                  },
+                  trailing: const Icon(
+                    Icons.swap_horiz,
+                    size: 20,
+                    color: Color(0xFFB8895A),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildDrawerButton(Icons.logout, loc.logout, () {
+              Navigator.pop(context);
+              _logout();
+            }),
+            const Spacer(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerButton(
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    Widget? trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFB8895A).withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 22, color: const Color(0xFFB8895A)),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                if (trailing != null) trailing,
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
