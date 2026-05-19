@@ -217,7 +217,11 @@ class AppTheme {
             color: textPrimary,
           ),
           bodyLarge: TextStyle(fontSize: 16, color: textPrimary, height: 1.5),
-          bodyMedium: TextStyle(fontSize: 14, color: textSecondary, height: 1.5),
+          bodyMedium: TextStyle(
+            fontSize: 14,
+            color: textSecondary,
+            height: 1.5,
+          ),
           bodySmall: TextStyle(fontSize: 12, color: textSecondary, height: 1.4),
           labelLarge: TextStyle(
             fontSize: 14,

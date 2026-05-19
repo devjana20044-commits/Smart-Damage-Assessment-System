@@ -40,9 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     }
   }
 
@@ -52,9 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         content: Text(message),
         backgroundColor: AppTheme.errorColor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -91,7 +89,9 @@ class _LoginScreenState extends State<LoginScreen> {
             icon: const Icon(Icons.language, color: AppTheme.navyCore),
             onPressed: () {
               localeProvider.changeLocale(
-                localeProvider.isArabic ? const Locale('en') : const Locale('ar'),
+                localeProvider.isArabic
+                    ? const Locale('en')
+                    : const Locale('ar'),
               );
             },
             tooltip: loc.language,
@@ -99,9 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
           IconButton(
             icon: const Icon(Icons.settings, color: AppTheme.navyCore),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
             tooltip: loc.settings,
           ),

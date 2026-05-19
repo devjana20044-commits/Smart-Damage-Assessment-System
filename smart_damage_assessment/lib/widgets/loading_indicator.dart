@@ -74,10 +74,7 @@ class LoadingOverlay extends StatelessWidget {
         if (isLoading)
           Container(
             color: (backgroundColor ?? Colors.black).withOpacity(opacity),
-            child: LoadingIndicator(
-              message: message ?? 'Loading...',
-              size: 50,
-            ),
+            child: LoadingIndicator(message: message ?? 'Loading...', size: 50),
           ),
       ],
     );
@@ -116,9 +113,10 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
       vsync: this,
     )..repeat();
 
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

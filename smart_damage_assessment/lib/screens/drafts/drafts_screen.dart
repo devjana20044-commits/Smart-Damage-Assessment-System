@@ -44,7 +44,10 @@ class _DraftsScreenState extends State<DraftsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           context.loc.delete,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           context.loc.deleteConfirmation,
@@ -53,14 +56,19 @@ class _DraftsScreenState extends State<DraftsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(context.loc.cancel, style: const TextStyle(color: Color(0xFFCBD5E1))),
+            child: Text(
+              context.loc.cancel,
+              style: const TextStyle(color: Color(0xFFCBD5E1)),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(context.loc.delete),
           ),
@@ -82,7 +90,10 @@ class _DraftsScreenState extends State<DraftsScreen> {
       latitude: draft.latitude,
       longitude: draft.longitude,
       images: draft.imagePaths.isNotEmpty
-          ? draft.imagePaths.map((p) => File(p)).where((f) => f.existsSync()).toList()
+          ? draft.imagePaths
+                .map((p) => File(p))
+                .where((f) => f.existsSync())
+                .toList()
           : null,
       pdfFile: draft.pdfPath != null && File(draft.pdfPath!).existsSync()
           ? File(draft.pdfPath!)
@@ -99,10 +110,12 @@ class _DraftsScreenState extends State<DraftsScreen> {
 
   void _openDraft(DraftReport draft) {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => CreateReportScreen(draft: draft)))
+        .push(
+          MaterialPageRoute(builder: (_) => CreateReportScreen(draft: draft)),
+        )
         .then((_) {
-      if (mounted) context.read<DraftProvider>().loadDrafts();
-    });
+          if (mounted) context.read<DraftProvider>().loadDrafts();
+        });
   }
 
   @override
@@ -117,10 +130,12 @@ class _DraftsScreenState extends State<DraftsScreen> {
         backgroundColor: const Color(0xFFFBF9F4),
         appBar: _buildAppBar(loc, isArabic),
         body: draftProvider.isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFC9A97C)))
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFFC9A97C)),
+              )
             : draftProvider.drafts.isEmpty
-                ? _buildEmptyState(loc)
-                : _buildDraftsList(draftProvider.drafts, loc, isArabic),
+            ? _buildEmptyState(loc)
+            : _buildDraftsList(draftProvider.drafts, loc, isArabic),
       ),
     );
   }
@@ -133,7 +148,11 @@ class _DraftsScreenState extends State<DraftsScreen> {
           color: Color(0xFF1E293B),
           border: Border(bottom: BorderSide(color: Color(0xFF334155))),
           boxShadow: [
-            BoxShadow(color: Color(0x0A000000), offset: Offset(0, 2), blurRadius: 4),
+            BoxShadow(
+              color: Color(0x0A000000),
+              offset: Offset(0, 2),
+              blurRadius: 4,
+            ),
           ],
         ),
         child: AppBar(
@@ -194,7 +213,11 @@ class _DraftsScreenState extends State<DraftsScreen> {
             child: Text(
               loc.draftsHint,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF44474D), height: 20 / 14),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF44474D),
+                height: 20 / 14,
+              ),
             ),
           ),
         ],
@@ -202,7 +225,11 @@ class _DraftsScreenState extends State<DraftsScreen> {
     );
   }
 
-  Widget _buildDraftsList(List<DraftReport> drafts, AppLocalizations loc, bool isArabic) {
+  Widget _buildDraftsList(
+    List<DraftReport> drafts,
+    AppLocalizations loc,
+    bool isArabic,
+  ) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       itemCount: drafts.length,
@@ -212,13 +239,19 @@ class _DraftsScreenState extends State<DraftsScreen> {
     );
   }
 
-  Widget _buildDraftCard(DraftReport draft, AppLocalizations loc, bool isArabic) {
+  Widget _buildDraftCard(
+    DraftReport draft,
+    AppLocalizations loc,
+    bool isArabic,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFC9A97C).withValues(alpha: 0.5)),
+        border: Border.all(
+          color: const Color(0xFFC9A97C).withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -241,7 +274,10 @@ class _DraftsScreenState extends State<DraftsScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFC9A97C).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -249,7 +285,11 @@ class _DraftsScreenState extends State<DraftsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.drafts, size: 14, color: const Color(0xFFC9A97C)),
+                          Icon(
+                            Icons.drafts,
+                            size: 14,
+                            color: const Color(0xFFC9A97C),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             loc.drafts,
@@ -265,7 +305,10 @@ class _DraftsScreenState extends State<DraftsScreen> {
                     const Spacer(),
                     Text(
                       '${draft.createdAt.day}/${draft.createdAt.month}/${draft.createdAt.year}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF75777D)),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF75777D),
+                      ),
                     ),
                   ],
                 ),
@@ -284,7 +327,11 @@ class _DraftsScreenState extends State<DraftsScreen> {
                   const SizedBox(height: 6),
                   Text(
                     draft.description,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF75777D), height: 1.4),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF75777D),
+                      height: 1.4,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -293,17 +340,26 @@ class _DraftsScreenState extends State<DraftsScreen> {
                 Row(
                   children: [
                     if (draft.imagePaths.isNotEmpty)
-                      _buildInfoChip(Icons.photo_camera, '${draft.imagePaths.length}'),
+                      _buildInfoChip(
+                        Icons.photo_camera,
+                        '${draft.imagePaths.length}',
+                      ),
                     if (draft.imagePaths.isNotEmpty) const SizedBox(width: 8),
                     if (draft.pdfPath != null) ...[
                       _buildInfoChip(Icons.picture_as_pdf, 'PDF'),
                       const SizedBox(width: 8),
                     ],
                     if (draft.videoLinks.isNotEmpty)
-                      _buildInfoChip(Icons.videocam, '${draft.videoLinks.length}'),
+                      _buildInfoChip(
+                        Icons.videocam,
+                        '${draft.videoLinks.length}',
+                      ),
                     if (draft.latitude != null && draft.longitude != null) ...[
                       const SizedBox(width: 8),
-                      _buildInfoChip(Icons.location_on, '${draft.latitude!.toStringAsFixed(2)}, ${draft.longitude!.toStringAsFixed(2)}'),
+                      _buildInfoChip(
+                        Icons.location_on,
+                        '${draft.latitude!.toStringAsFixed(2)}, ${draft.longitude!.toStringAsFixed(2)}',
+                      ),
                     ],
                   ],
                 ),
@@ -318,11 +374,19 @@ class _DraftsScreenState extends State<DraftsScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () => _submitDraft(draft),
                           icon: const Icon(Icons.send, size: 16),
-                          label: Text(loc.submitReport, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          label: Text(
+                            loc.submitReport,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFC9A97C),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             elevation: 0,
                           ),
                         ),
@@ -337,7 +401,9 @@ class _DraftsScreenState extends State<DraftsScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.errorColor,
                           side: const BorderSide(color: AppTheme.errorColor),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           padding: EdgeInsets.zero,
                         ),
                         child: const Icon(Icons.delete_outline, size: 18),
@@ -359,7 +425,10 @@ class _DraftsScreenState extends State<DraftsScreen> {
       children: [
         Icon(icon, size: 14, color: const Color(0xFF75777D)),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 11, color: Color(0xFF75777D))),
+        Text(
+          text,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF75777D)),
+        ),
       ],
     );
   }

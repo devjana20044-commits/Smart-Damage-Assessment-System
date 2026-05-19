@@ -42,7 +42,9 @@ class CustomButton extends StatelessWidget {
               ? (backgroundColor ?? theme.primaryColor)
               : theme.disabledColor,
           foregroundColor: textColor ?? Colors.white,
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding:
+              padding ??
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: borderRadius ?? BorderRadius.circular(8),
           ),
@@ -116,7 +118,9 @@ class CustomOutlinedButton extends StatelessWidget {
           foregroundColor: isEnabled
               ? (textColor ?? theme.primaryColor)
               : theme.disabledColor,
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding:
+              padding ??
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: borderRadius ?? BorderRadius.circular(8),
           ),
@@ -125,9 +129,7 @@ class CustomOutlinedButton extends StatelessWidget {
             ? const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2),
               )
             : Text(
                 text,

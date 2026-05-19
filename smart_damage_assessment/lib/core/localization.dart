@@ -250,7 +250,8 @@ class AppLocalizations {
       'drafts': 'Drafts',
       'saveDraft': 'Save Draft',
       'noDraftsYet': 'No Drafts Yet',
-      'draftsHint': 'Save reports as drafts to send them later when you have internet',
+      'draftsHint':
+          'Save reports as drafts to send them later when you have internet',
       'draftSaved': 'Draft saved successfully',
       'draftDeleted': 'Draft deleted successfully',
     },

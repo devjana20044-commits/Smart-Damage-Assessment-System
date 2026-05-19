@@ -107,7 +107,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 },
               )
             : widget.suffixIcon,
-        contentPadding: widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            widget.contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: theme.colorScheme.outline),
@@ -129,9 +131,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
           borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
         ),
         filled: true,
-        fillColor: widget.enabled ? theme.colorScheme.surface : theme.disabledColor.withOpacity(0.1),
-        labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
-        hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+        fillColor: widget.enabled
+            ? theme.colorScheme.surface
+            : theme.disabledColor.withOpacity(0.1),
+        labelStyle: TextStyle(
+          color: theme.colorScheme.onSurface.withOpacity(0.7),
+        ),
+        hintStyle: TextStyle(
+          color: theme.colorScheme.onSurface.withOpacity(0.5),
+        ),
       ),
     );
   }

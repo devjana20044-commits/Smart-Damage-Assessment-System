@@ -106,11 +106,6 @@ class ReportService {
       final response = await _dioService.dio.post(
         ApiConstants.reports,
         data: formData,
-        options: Options(
-          headers: {
-            ApiConstants.contentType: ApiConstants.multipartContentType,
-          },
-        ),
       );
 
       final responseData = response.data;
@@ -140,14 +135,16 @@ class ReportService {
     List<String>? remainingOldImages,
   }) async {
     try {
-      final Map<String, dynamic> formDataMap = {
-        '_method': 'PUT',
-      };
-      
-      if (rawLocation != null) formDataMap[ApiConstants.rawLocation] = rawLocation;
-      if (rawDescription != null && rawDescription.isNotEmpty) formDataMap[ApiConstants.rawDescription] = rawDescription;
-      if (latitude != null) formDataMap[ApiConstants.latitude] = latitude.toString();
-      if (longitude != null) formDataMap[ApiConstants.longitude] = longitude.toString();
+      final Map<String, dynamic> formDataMap = {'_method': 'PUT'};
+
+      if (rawLocation != null)
+        formDataMap[ApiConstants.rawLocation] = rawLocation;
+      if (rawDescription != null && rawDescription.isNotEmpty)
+        formDataMap[ApiConstants.rawDescription] = rawDescription;
+      if (latitude != null)
+        formDataMap[ApiConstants.latitude] = latitude.toString();
+      if (longitude != null)
+        formDataMap[ApiConstants.longitude] = longitude.toString();
 
       if (remainingOldImages != null) {
         for (int i = 0; i < remainingOldImages.length; i++) {
@@ -187,15 +184,11 @@ class ReportService {
       final response = await _dioService.dio.post(
         '${ApiConstants.reports}/$id',
         data: formData,
-        options: Options(
-          headers: {
-            ApiConstants.contentType: ApiConstants.multipartContentType,
-          },
-        ),
       );
 
       final responseData = response.data;
-      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
+      if (responseData is Map<String, dynamic> &&
+          responseData.containsKey('data')) {
         return Report.fromJson(responseData['data'] as Map<String, dynamic>);
       }
       if (responseData is Map<String, dynamic>) {

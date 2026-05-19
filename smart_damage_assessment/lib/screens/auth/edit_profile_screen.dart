@@ -406,7 +406,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         fit: BoxFit.cover,
         width: 100,
         height: 100,
-        errorBuilder: (context, error, stackTrace) => _buildInitialAvatar(user.name),
+        errorBuilder: (context, error, stackTrace) =>
+            _buildInitialAvatar(user.name),
       );
     }
     return _buildInitialAvatar(user?.name);

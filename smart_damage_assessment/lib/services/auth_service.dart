@@ -188,11 +188,6 @@ class AuthService {
         final response = await _dioService.dio.post(
           ApiConstants.me,
           data: formData,
-          options: Options(
-            headers: {
-              ApiConstants.contentType: ApiConstants.multipartContentType,
-            },
-          ),
         );
         final responseData = response.data;
         if (responseData is Map<String, dynamic>) {

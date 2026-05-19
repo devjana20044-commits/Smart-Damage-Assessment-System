@@ -15,7 +15,7 @@ class LocaleProvider with ChangeNotifier {
   // Getters
   Locale? get locale => _locale;
   bool get isLoading => _isLoading;
-  
+
   // Check if current locale is Arabic
   bool get isArabic => _locale?.languageCode == 'ar';
 
@@ -25,7 +25,7 @@ class LocaleProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedLocale = prefs.getString(_localeKey);
-      
+
       if (savedLocale != null) {
         // Parse locale string (e.g., 'en' or 'ar')
         _locale = Locale(savedLocale);
@@ -50,10 +50,10 @@ class LocaleProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_localeKey, newLocale.languageCode);
-      
+
       _locale = newLocale;
       print('🌍 LocaleProvider - Changed locale to: ${newLocale.languageCode}');
-      
+
       notifyListeners();
     } catch (e) {
       print('❌ LocaleProvider - Failed to change locale: $e');

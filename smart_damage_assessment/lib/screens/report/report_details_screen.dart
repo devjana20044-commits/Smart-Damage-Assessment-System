@@ -101,15 +101,17 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
   }
 
   void _startEditing(Report report) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CreateReportScreen(reportId: report.id),
-      ),
-    ).then((_) {
-      if (mounted) {
-        context.read<ReportProvider>().fetchReportById(widget.reportId);
-      }
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => CreateReportScreen(reportId: report.id),
+          ),
+        )
+        .then((_) {
+          if (mounted) {
+            context.read<ReportProvider>().fetchReportById(widget.reportId);
+          }
+        });
   }
 
   void _openFullScreenImage(Report report, int initialIndex) {
@@ -131,7 +133,10 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           context.loc.confirmDelete,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           context.loc.deleteConfirmation,
@@ -150,7 +155,9 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(context.loc.deleteReport),
           ),
@@ -159,7 +166,9 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
     );
 
     if (confirmed == true && mounted) {
-      final success = await context.read<ReportProvider>().deleteReport(report.id);
+      final success = await context.read<ReportProvider>().deleteReport(
+        report.id,
+      );
       if (success && mounted) {
         _showSuccessSnackBar(context.loc.reportDeleted);
         Navigator.pop(context);
@@ -208,7 +217,11 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: true,
-      shape: Border(bottom: BorderSide(color: const Color(0xFFC9A97C).withValues(alpha: 0.3))),
+      shape: Border(
+        bottom: BorderSide(
+          color: const Color(0xFFC9A97C).withValues(alpha: 0.3),
+        ),
+      ),
       title: Text(
         loc.reportDetails,
         style: const TextStyle(
@@ -436,7 +449,6 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
         Text(
           report.location.raw,
           style: const TextStyle(
-            
             fontSize: 24,
             fontWeight: FontWeight.w600,
             height: 32 / 24,
@@ -609,7 +621,6 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
                         Text(
                           report.formattedCreatedDate,
                           style: const TextStyle(
-                            
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF172439),
@@ -633,9 +644,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: const Color(0xFFC9A97C).withValues(alpha: 0.5),
-      ),
+      border: Border.all(color: const Color(0xFFC9A97C).withValues(alpha: 0.5)),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.03),
@@ -656,18 +665,11 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.map_outlined,
-              size: 36,
-              color: Color(0xFFCBD5E1),
-            ),
+            const Icon(Icons.map_outlined, size: 36, color: Color(0xFFCBD5E1)),
             const SizedBox(height: 6),
             Text(
               context.loc.viewOnMap,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFFCBD5E1),
-              ),
+              style: const TextStyle(fontSize: 12, color: Color(0xFFCBD5E1)),
             ),
           ],
         ),
@@ -788,7 +790,6 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
                 Text(
                   report.user.name,
                   style: const TextStyle(
-                    
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF172439),
@@ -827,10 +828,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
             ),
             child: Text(
               loc.updateReport,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -843,10 +841,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
             icon: const Icon(Icons.delete_outline, size: 22),
             label: Text(
               loc.deleteReport,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC9A97C),

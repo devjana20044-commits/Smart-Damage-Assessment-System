@@ -30,7 +30,9 @@ class StorageService {
     print('💾 STORAGE SERVICE - Saving token: ${token.substring(0, 10)}...');
     await _prefs?.setString(AppConfig.tokenKey, token);
     final savedToken = _prefs?.getString(AppConfig.tokenKey);
-    print('💾 STORAGE SERVICE - Token saved successfully: ${savedToken != null ? "YES" : "NO"}');
+    print(
+      '💾 STORAGE SERVICE - Token saved successfully: ${savedToken != null ? "YES" : "NO"}',
+    );
   }
 
   /// Get authentication token

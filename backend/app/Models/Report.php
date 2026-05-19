@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class Report extends Model
 {
@@ -14,9 +13,6 @@ class Report extends Model
     protected $fillable = [
         'user_id',
         'image_path',
-        'images',
-        'pdf_file',
-        'video_links',
         'latitude',
         'longitude',
         'raw_location',
@@ -25,61 +21,22 @@ class Report extends Model
         'ai_damage_level',
         'ai_analysis',
         'status',
+        'images',
+        'pdf_file',
+        'video_links',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'images' => 'array',
-            'video_links' => 'array',
-            'latitude' => 'decimal:8',
-            'longitude' => 'decimal:8',
-        ];
-    }
+    protected $casts = [
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'ai_damage_level' => 'string',
+        'status' => 'string',
+        'images' => 'array',
+        'video_links' => 'array',
+    ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function getImageUrlsAttribute(): array
-    {
-        $urls = [];
-
-        if ($this->images && is_array($this->images)) {
-            foreach ($this->images as $path) {
-                $urls[] = url(Storage::url($path));
-            }
-        }
-
-        if (empty($urls) && $this->image_path) {
-            $urls[] = url(Storage::url($this->image_path));
-        }
-
-        return $urls;
-    }
-
-    public function getPdfUrlAttribute(): ?string
-    {
-        return $this->pdf_file ? url(Storage::url($this->pdf_file)) : null;
-    }
-
-    protected static function booted(): void
-    {
-        static::deleting(function (Report $report) {
-            if ($report->image_path) {
-                Storage::disk('public')->delete($report->image_path);
-            }
-
-            if ($report->images && is_array($report->images)) {
-                foreach ($report->images as $path) {
-                    Storage::disk('public')->delete($path);
-                }
-            }
-
-            if ($report->pdf_file) {
-                Storage::disk('public')->delete($report->pdf_file);
-            }
-        });
     }
 }
