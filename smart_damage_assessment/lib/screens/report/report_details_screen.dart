@@ -178,9 +178,12 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen>
     final report = reportProvider.currentReport;
 
     if (reportProvider.errorMessage != null) {
+      final msg = reportProvider.errorMessage!;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showErrorSnackBar(reportProvider.errorMessage!);
         reportProvider.clearError();
+        if (mounted) {
+          _showErrorSnackBar(msg);
+        }
       });
     }
 

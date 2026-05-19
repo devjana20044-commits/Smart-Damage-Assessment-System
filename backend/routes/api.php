@@ -21,5 +21,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::match(['put', 'post'], '/me', [AuthController::class, 'updateMe']);
 
+    Route::post('reports/{id}', [ReportController::class, 'update']);
     Route::apiResource('reports', ReportController::class);
 });
