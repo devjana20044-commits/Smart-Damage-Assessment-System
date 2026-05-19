@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -16,11 +18,32 @@ import 'screens/report/create_report_screen.dart';
 import 'services/auth_service.dart';
 import 'services/dio_service.dart';
 import 'services/draft_service.dart';
+import 'services/error_logger_service.dart';
 import 'services/report_service.dart';
 import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize error logger FIRST
+  final errorLogger = await ErrorLoggerService.getInstance();
+  globalErrorLogger = errorLogger;
+
+  // Catch all Flutter framework errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    errorLogger.logFlutterError(details);
+  };
+
+  // Catch errors outside Flutter framework (async, isolates)
+  PlatformDispatcher.instance.onError = (error, stack) {
+    errorLogger.logError(
+      source: 'PlatformDispatcher',
+      error: error,
+      stackTrace: stack,
+    );
+    return true; // Handled
+  };
 
   final storageService = await StorageService.getInstance();
   final dioService = await DioService.getInstance();
