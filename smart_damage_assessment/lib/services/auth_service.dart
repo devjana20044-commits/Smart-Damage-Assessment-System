@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../core/api_constants.dart';
@@ -163,8 +164,48 @@ class AuthService {
     String? currentPassword,
     String? newPassword,
     String? newPasswordConfirmation,
+    File? profileImage,
   }) async {
     try {
+      if (profileImage != null) {
+        final formDataMap = <String, dynamic>{
+          '_method': 'PUT',
+          'name': name,
+          'email': email,
+        };
+        if (currentPassword != null && currentPassword.isNotEmpty) {
+          formDataMap['current_password'] = currentPassword;
+        }
+        if (newPassword != null && newPassword.isNotEmpty) {
+          formDataMap['password'] = newPassword;
+          formDataMap['password_confirmation'] = newPasswordConfirmation ?? '';
+        }
+        formDataMap['profile_image'] = await MultipartFile.fromFile(
+          profileImage.path,
+          filename: profileImage.path.split('/').last,
+        );
+        final formData = FormData.fromMap(formDataMap);
+        final response = await _dioService.dio.post(
+          ApiConstants.me,
+          data: formData,
+          options: Options(
+            headers: {
+              ApiConstants.contentType: ApiConstants.multipartContentType,
+            },
+          ),
+        );
+        final responseData = response.data;
+        if (responseData is Map<String, dynamic>) {
+          final userData =
+              responseData['user'] as Map<String, dynamic>? ?? responseData;
+          final user = User.fromJson(userData);
+          await _storageService.saveUser(user);
+          return user;
+        } else {
+          throw Exception('Invalid response format');
+        }
+      }
+
       final data = <String, dynamic>{'name': name, 'email': email};
       if (currentPassword != null && currentPassword.isNotEmpty) {
         data['current_password'] = currentPassword;

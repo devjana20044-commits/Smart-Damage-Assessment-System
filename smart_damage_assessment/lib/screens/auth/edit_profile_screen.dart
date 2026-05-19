@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../../core/localization.dart';
 import '../../core/theme.dart';
+import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 
@@ -22,6 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  File? _newProfileImage;
 
   @override
   void initState() {
@@ -41,6 +46,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickProfileImage() async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppTheme.navyCore),
+              title: const Text('التقاط من الكاميرا'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library,
+                color: AppTheme.navyCore,
+              ),
+              title: const Text('اختيار من المعرض'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      if (source == ImageSource.camera) {
+        final permission = await Permission.camera.request();
+        if (!permission.isGranted) return;
+      } else {
+        final permission = await Permission.photos.request();
+        if (!permission.isGranted) return;
+      }
+
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _newProfileImage = File(pickedFile.path);
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -57,6 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       newPasswordConfirmation: _confirmPasswordController.text.isNotEmpty
           ? _confirmPasswordController.text
           : null,
+      profileImage: _newProfileImage,
     );
 
     if (!mounted) return;
@@ -90,6 +162,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final localeProvider = context.watch<LocaleProvider>();
     final isArabic = localeProvider.isArabic;
     final authProvider = context.watch<AuthProvider>();
+    final user = authProvider.user;
 
     return Directionality(
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
@@ -117,28 +190,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF475569),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFF64748B),
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _nameController.text.isNotEmpty
-                            ? _nameController.text[0].toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
+                  child: GestureDetector(
+                    onTap: _pickProfileImage,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF475569),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF64748B),
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipOval(child: _buildAvatarContent(user)),
                         ),
-                      ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppTheme.navyCore,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -299,6 +386,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarContent(User? user) {
+    if (_newProfileImage != null) {
+      return Image.file(
+        _newProfileImage!,
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+      );
+    }
+    if (user?.profileImage != null && user!.profileImage!.isNotEmpty) {
+      return Image.network(
+        user.profileImage!,
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+        errorBuilder: (context, error, stackTrace) => _buildInitialAvatar(user.name),
+      );
+    }
+    return _buildInitialAvatar(user?.name);
+  }
+
+  Widget _buildInitialAvatar(String? name) {
+    return Center(
+      child: Text(
+        (name ?? 'U').isNotEmpty ? name![0].toUpperCase() : 'U',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 40,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

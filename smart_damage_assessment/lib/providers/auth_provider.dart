@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
@@ -127,6 +128,7 @@ class AuthProvider with ChangeNotifier {
     String? currentPassword,
     String? newPassword,
     String? newPasswordConfirmation,
+    File? profileImage,
   }) async {
     _setLoading(true);
     _clearError();
@@ -137,6 +139,7 @@ class AuthProvider with ChangeNotifier {
         currentPassword: currentPassword,
         newPassword: newPassword,
         newPasswordConfirmation: newPasswordConfirmation,
+        profileImage: profileImage,
       );
       notifyListeners();
       return true;

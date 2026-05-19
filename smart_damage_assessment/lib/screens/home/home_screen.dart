@@ -194,25 +194,19 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12, left: 12),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF475569),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF64748B)),
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                 ),
-                child: Center(
-                  child: Text(
-                    (user?.name ?? 'G').isNotEmpty
-                        ? user!.name[0].toUpperCase()
-                        : 'G',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF475569),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF64748B)),
                   ),
+                  child: ClipOval(child: _buildAvatarImage(user, 32, 14)),
                 ),
               ),
             ),
@@ -519,7 +513,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             loc.noReportsYet,
             style: const TextStyle(
-
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Color(0xFF172439),
@@ -633,71 +626,57 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF475569),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFF64748B),
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        (user?.name ?? 'G').isNotEmpty
-                            ? user!.name[0].toUpperCase()
-                            : 'G',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF475569),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF64748B),
+                          width: 2,
                         ),
                       ),
+                      child: ClipOval(child: _buildAvatarImage(user, 52, 22)),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.name ?? 'Guest',
-                          style: const TextStyle(
-              
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.name ?? 'Guest',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user?.email ?? '',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.6),
+                          const SizedBox(height: 2),
+                          Text(
+                            user?.email ?? '',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
+                    Container(
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
@@ -713,8 +692,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Colors.white,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -729,9 +708,9 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             _buildDrawerButton(Icons.drafts, loc.drafts, () {
               Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const DraftsScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const DraftsScreen()));
             }),
             const SizedBox(height: 8),
             _buildDrawerButton(Icons.add_circle_outline, loc.createReport, () {
@@ -808,6 +787,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (trailing != null) trailing,
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarImage(User? user, double size, double fontSize) {
+    if (user?.profileImage != null && user!.profileImage!.isNotEmpty) {
+      return Image.network(
+        user.profileImage!,
+        fit: BoxFit.cover,
+        width: size,
+        height: size,
+        errorBuilder: (_, __, ___) =>
+            _buildInitialCircle(user.name, size, fontSize),
+      );
+    }
+    return _buildInitialCircle(user?.name, size, fontSize);
+  }
+
+  Widget _buildInitialCircle(String? name, double size, double fontSize) {
+    return Container(
+      width: size,
+      height: size,
+      color: const Color(0xFF475569),
+      child: Center(
+        child: Text(
+          (name ?? 'G').isNotEmpty ? name![0].toUpperCase() : 'G',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

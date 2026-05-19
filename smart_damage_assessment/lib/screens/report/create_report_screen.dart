@@ -41,6 +41,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   bool _isGettingLocation = false;
   int _currentImageIndex = 0;
 
+  List<String> _existingImageUrls = [];
+  final List<String> _removedExistingImageUrls = [];
+  String? _existingPdfUrl;
+  bool _existingPdfRemoved = false;
+
   final ImagePicker _imagePicker = ImagePicker();
 
   static const Color _gold = Color(0xFFC9A97C);
@@ -85,6 +90,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           );
         }
         _videoLinks.addAll(report.videoLinks);
+        _existingImageUrls = List<String>.from(report.images);
+        _existingPdfUrl = report.pdfUrl;
       });
     }
   }
@@ -268,15 +275,15 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   Future<void> _pickLocationOnMap() async {
-    final Map<String, double>? result =
-        await Navigator.of(context).push<Map<String, double>>(
-      MaterialPageRoute(
-        builder: (_) => _LocationPickerScreen(
-          initialLat: _currentPosition?.latitude ?? 33.5138,
-          initialLng: _currentPosition?.longitude ?? 36.2765,
-        ),
-      ),
-    );
+    final Map<String, double>? result = await Navigator.of(context)
+        .push<Map<String, double>>(
+          MaterialPageRoute(
+            builder: (_) => _LocationPickerScreen(
+              initialLat: _currentPosition?.latitude ?? 33.5138,
+              initialLng: _currentPosition?.longitude ?? 36.2765,
+            ),
+          ),
+        );
     if (result != null) {
       setState(() {
         _currentPosition = Position(
@@ -306,7 +313,9 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
   Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedImages.isEmpty && widget.reportId == null) {
+    if (_selectedImages.isEmpty &&
+        _existingImageUrls.isEmpty &&
+        widget.reportId == null) {
       _showSnackBar('يرجى إضافة صورة واحدة على الأقل');
       return;
     }
@@ -322,6 +331,9 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         images: _selectedImages,
         pdfFile: _selectedPdf,
         videoLinks: _videoLinks.isNotEmpty ? _videoLinks : null,
+        remainingOldImages: _existingImageUrls.isNotEmpty
+            ? _existingImageUrls
+            : null,
       );
       if (success && mounted) {
         _showSnackBar('تم تحديث التقرير بنجاح');
@@ -457,10 +469,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     );
   }
 
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String title,
-  }) {
+  Widget _buildSectionHeader({required IconData icon, required String title}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -605,7 +614,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.my_location, color: _gold, size: 28),
+                                const Icon(
+                                  Icons.my_location,
+                                  color: _gold,
+                                  size: 28,
+                                ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}',
@@ -641,7 +654,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.explore, size: 16, color: Color(0xFF172439)),
+                              const Icon(
+                                Icons.explore,
+                                size: 16,
+                                color: Color(0xFF172439),
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 _currentPosition != null
@@ -705,10 +722,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   icon: const Icon(Icons.map_outlined, size: 20),
                   label: const Text(
                     'تحديد الموقع على الخريطة',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _navy,
@@ -727,6 +741,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   Widget _buildMediaSection(AppLocalizations loc) {
+    final totalImages = _existingImageUrls.length + _selectedImages.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -751,6 +766,77 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             ),
           ],
         ),
+        if (_existingImageUrls.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'الصور الحالية',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _labelColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 120,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _existingImageUrls.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _existingImageUrls[index],
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 120,
+                          height: 120,
+                          color: const Color(0xFFE8E6E1),
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Color(0xFF75777D),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _removedExistingImageUrls.add(
+                              _existingImageUrls[index],
+                            );
+                            _existingImageUrls.removeAt(index);
+                          });
+                        },
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.errorColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
         if (_selectedImages.isNotEmpty) ...[
           const SizedBox(height: 16),
           SizedBox(
@@ -814,11 +900,15 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'تم اختيار ${_selectedImages.length} صورة/صور',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            'تم اختيار $totalImages صورة/صور',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
+        if (_existingImageUrls.isNotEmpty && _selectedImages.isEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            'إجمالي $totalImages صورة/صور',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ],
@@ -837,7 +927,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _gold, width: 2, strokeAlign: BorderSide.strokeAlignInside),
+          border: Border.all(
+            color: _gold,
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
         ),
         child: Column(
           children: [
@@ -860,8 +954,54 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(icon: Icons.picture_as_pdf, title: 'ملف PDF (اختياري)'),
+        _buildSectionHeader(
+          icon: Icons.picture_as_pdf,
+          title: 'ملف PDF (اختياري)',
+        ),
         const SizedBox(height: 16),
+        if (_existingPdfUrl != null &&
+            !_existingPdfRemoved &&
+            _selectedPdf == null) ...[
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAE8E3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _gold),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.picture_as_pdf, color: AppTheme.errorColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _existingPdfUrl!.split('/').last,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF172439),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.close,
+                    color: AppTheme.errorColor,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _existingPdfRemoved = true;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         GestureDetector(
           onTap: _pickPdf,
           child: Container(
@@ -893,7 +1033,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 ),
                 if (_selectedPdf != null)
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppTheme.errorColor, size: 20),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppTheme.errorColor,
+                      size: 20,
+                    ),
                     onPressed: _removePdf,
                   )
                 else
@@ -910,7 +1054,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(icon: Icons.videocam, title: 'روابط الفيديو (اختياري)'),
+        _buildSectionHeader(
+          icon: Icons.videocam,
+          title: 'روابط الفيديو (اختياري)',
+        ),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -923,7 +1070,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                     filled: true,
                     fillColor: Colors.white,
                     hintText: 'https://youtube.com/...',
-                    hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 14,
+                    ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -983,11 +1133,18 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                       link,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF172439)),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF172439),
+                      ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppTheme.errorColor, size: 18),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppTheme.errorColor,
+                      size: 18,
+                    ),
                     onPressed: () => _removeVideoLink(index),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -1058,29 +1215,30 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: OutlinedButton.icon(
-                onPressed: _saveDraft,
-                icon: const Icon(Icons.drafts, size: 22),
-                label: Text(
-                  loc.drafts,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+            if (widget.reportId == null)
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: _saveDraft,
+                  icon: const Icon(Icons.drafts, size: 22),
+                  label: Text(
+                    loc.drafts,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _navy,
-                  side: const BorderSide(color: _gold, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _navy,
+                    side: const BorderSide(color: _gold, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+            if (widget.reportId == null) const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -1094,7 +1252,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 ),
                 child: Text(
                   loc.cancel,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),
@@ -1226,9 +1387,10 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
         'limit': '5',
         'accept-language': 'ar',
       });
-      final response = await http.get(uri, headers: {
-        'User-Agent': 'SmartDamageAssessment/1.0',
-      });
+      final response = await http.get(
+        uri,
+        headers: {'User-Agent': 'SmartDamageAssessment/1.0'},
+      );
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
@@ -1251,8 +1413,10 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
   }
 
   void _selectSearchResult(Map<String, dynamic> result) {
-    final lat = double.tryParse(result['lat']?.toString() ?? '') ?? _selectedLat;
-    final lng = double.tryParse(result['lon']?.toString() ?? '') ?? _selectedLng;
+    final lat =
+        double.tryParse(result['lat']?.toString() ?? '') ?? _selectedLat;
+    final lng =
+        double.tryParse(result['lon']?.toString() ?? '') ?? _selectedLng;
     setState(() {
       _selectedLat = lat;
       _selectedLng = lng;
@@ -1277,14 +1441,22 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
         centerTitle: true,
         title: const Text(
           'تحديد الموقع',
-          style: TextStyle(fontFamily: 'Manrope', fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: _confirm,
             child: const Text(
               'تأكيد',
-              style: TextStyle(color: Color(0xFFC9A97C), fontWeight: FontWeight.w700, fontSize: 16),
+              style: TextStyle(
+                color: Color(0xFFC9A97C),
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
             ),
           ),
         ],
@@ -1322,28 +1494,43 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
                         onSubmitted: _searchLocation,
                         decoration: InputDecoration(
                           hintText: 'ابحث عن موقع...',
-                          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                          prefixIcon: const Icon(Icons.search, color: Color(0xFFC9A97C)),
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Color(0xFFC9A97C),
+                          ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear, color: Color(0xFF75777D), size: 20),
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    color: Color(0xFF75777D),
+                                    size: 20,
+                                  ),
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _searchResults = []);
                                   },
                                 )
                               : _isSearching
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    )
-                                  : null,
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                              : null,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                         style: const TextStyle(fontSize: 14),
                       ),
@@ -1371,21 +1558,32 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       itemCount: _searchResults.length,
-                      separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade200),
                       itemBuilder: (context, index) {
                         final result = _searchResults[index];
                         return InkWell(
                           onTap: () => _selectSearchResult(result),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             child: Row(
                               children: [
-                                const Icon(Icons.location_on, color: Color(0xFFC9A97C), size: 22),
+                                const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFFC9A97C),
+                                  size: 22,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     result['display_name']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 13, color: Color(0xFF172439)),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF172439),
+                                    ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1419,7 +1617,11 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.location_pin, color: Color(0xFFC9A97C), size: 24),
+                  const Icon(
+                    Icons.location_pin,
+                    color: Color(0xFFC9A97C),
+                    size: 24,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1436,10 +1638,15 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFC9A97C),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       elevation: 2,
                     ),
-                    child: const Text('تأكيد', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'تأكيد',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ],
               ),
