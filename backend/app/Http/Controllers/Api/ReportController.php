@@ -195,12 +195,18 @@ class ReportController extends Controller
         // دمج الصور المتبقية والصور الجديدة
         $updatedImagesList = array_merge($remainingImages, $newImagePaths);
 
-        if (! empty($updatedImagesList)) {
-            $report->images = $updatedImagesList;
-            $report->image_path = $updatedImagesList[0];
-        } else {
-            $report->images = null;
-            $report->image_path = null;
+        // Only update images if the user provided image-related data
+        $userProvidedImages = $request->hasFile('images') || $request->hasFile('image') || $request->has('remaining_old_images');
+
+        if ($userProvidedImages) {
+            if (! empty($updatedImagesList)) {
+                $report->images = $updatedImagesList;
+                $report->image_path = $updatedImagesList[0];
+            } else {
+                // User explicitly cleared all images
+                $report->images = null;
+                $report->image_path = 'placeholder.jpg'; // avoid NOT NULL constraint
+            }
         }
 
         // 3. معالجة ملف PDF الجديد

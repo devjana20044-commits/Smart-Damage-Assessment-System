@@ -28,7 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports', [App\Http\Controllers\Api\ReportController::class, 'index']);
     Route::post('/reports', [App\Http\Controllers\Api\ReportController::class, 'store']);
     Route::get('/reports/{id}', [App\Http\Controllers\Api\ReportController::class, 'show']);
-    Route::post('/reports/{id}', [App\Http\Controllers\Api\ReportController::class, 'update']);
+    Route::match(['post', 'put'], '/reports/{id}', [App\Http\Controllers\Api\ReportController::class, 'update']);
     Route::delete('/reports/{id}', [App\Http\Controllers\Api\ReportController::class, 'destroy']);
 });
 

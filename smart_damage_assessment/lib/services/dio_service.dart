@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../core/config.dart';
 import '../core/api_constants.dart';
+import 'error_logger_service.dart';
 import 'storage_service.dart';
 
 class DioService {
@@ -173,6 +174,9 @@ class _ErrorInterceptor extends Interceptor {
         errorMessage = 'An unexpected error occurred. Please try again.';
     }
 
+    // Log error to file for diagnostics
+    _logErrorToFile(err, errorMessage);
+
     handler.reject(
       DioException(
         requestOptions: err.requestOptions,
@@ -181,6 +185,26 @@ class _ErrorInterceptor extends Interceptor {
         error: errorMessage,
       ),
     );
+  }
+
+  /// Persist error details to the error logger file
+  void _logErrorToFile(DioException err, String message) {
+    try {
+      // Access global logger set in main.dart
+      final logger = globalErrorLogger;
+      if (logger != null) {
+        logger.logDioError(
+          method: err.requestOptions.method,
+          url: err.requestOptions.uri.toString(),
+          error: message,
+          statusCode: err.response?.statusCode,
+          responseBody: err.response?.data,
+          stackTrace: err.stackTrace,
+        );
+      }
+    } catch (_) {
+      // Silent - logging failure shouldn't break the app
+    }
   }
 
   String? _extractErrorMessage(dynamic responseData) {

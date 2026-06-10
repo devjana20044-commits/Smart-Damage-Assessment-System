@@ -5,7 +5,7 @@ import '../services/storage_service.dart';
 class AppConfig {
   // Default fallback values (used only when no saved config exists)
   // These are NOT const — user can change them from Settings screen
-  static String defaultIp = '192.168.43.19';
+  static String defaultIp = '10.64.254.121';
   static String defaultPort = '8000';
   static String defaultPath = '/api';
 
