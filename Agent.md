@@ -49,18 +49,19 @@ smart-damage-assessment-system/
 
 ## ✅ أفضل الممارسات المكتشفة
 - استخدام `MultipartFile.fromFile` لرفع الملفات مع Dio.
-- استخدام `_method: PUT` عند إرسال طلبات تعديل البيانات (multipart/form-data) مع Laravel.
+- **دائماً** استخدام `POST` مع `_method: PUT` (Method Spoofing) بدلاً من `PUT` المباشر — لأن كثير من السيرفرات (Apache/Nginx/Proxy) تحجب PUT.
 - إرسال الصور والملفات عبر `public` storage وجعل الروابط كاملة باستخدام `url('storage/...')`.
 
 ## ⚠️ المشاكل المعروفة والحلول
 - تعيين `Content-Type` يدوياً لـ `multipart/form-data` في Dio يحذف boundary التلقائي ويسبب فشل خادم الـ backend في قراءة البيانات.
 - نقص الـ endpoints مثل `/register` وتعديل الملف الشخصي `/me` وتحديث التقارير `/reports/{id}` في Laravel.
-- فشل التحديث للتقارير عند عدم وجود ملفات جديدة بسبب مشاكل الـ Multipart الفارغ والـ Spoofing: تم الحل بفصل طلبات الـ JSON والـ Multipart.
+- **خطأ 405 Method Not Allowed عند استخدام PUT المباشر:** السيرفر الذي يعمل عليه التطبيق يحجب طلبات HTTP `PUT` المباشرة. الحل الدائم هو استخدام `POST` مع `_method: PUT` في كل طلبات التعديل (Method Spoofing).
 - عدم التحقق من كلمة المرور الحالية في تعديل الملف الشخصي: تم الحل بفرض `current_password` في الـ Request والتحقق عبر `Hash::check`.
 
 ## 🚫 أنماط يجب تجنبها
 - تعيين `Content-Type` يدوياً لـ `multipart/form-data` في Flutter (دع Dio يتعامل معها تلقائياً).
-- إرسال طلبات `POST` مع Spoofing كـ `multipart/form-data` بدون ملفات: يسبب مشاكل معالجة على السيرفرات، بدلاً من ذلك استخدم طلبات `PUT` JSON نظيفة.
+- **استخدام `dio.put()` المباشر مع Laravel** — يجب دائماً استخدام `dio.post()` مع `_method: PUT` في جسم الطلب لأن السيرفر يحجب PUT.
+- إرسال طلبات `POST` مع Spoofing كـ `multipart/form-data` بدون ملفات: يسبب مشاكل معالجة على السيرفرات.
 
 ## 🧹 صيانة الذاكرة (Memory Hygiene)
 ### آخر تنظيف: 2026-06-10

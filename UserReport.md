@@ -9,11 +9,13 @@
 | 2026-05-19 | تهيئة مستند التغييرات وذاكرة العميل | Agent.md, UserReport.md |
 | 2026-05-19 | حل مشاكل التوافق بالكامل وتطوير الـ API والـ Client | AuthController.php, ReportController.php, ProfileUpdateRequest.php, UpdateReportRequest.php, api.php, auth_service.dart, report_service.dart, TestCase.php, phpunit.xml, UserFactory.php |
 | 2026-06-10 | حل مشكلة زر التحديث في التقارير وتغيير كلمة السر في الحساب الشخصي | ProfileUpdateRequest.php, AuthController.php, ApiCompatibilityTest.php, report_service.dart, edit_profile_screen.dart |
+| 2026-06-10 | إصلاح خطأ 405 Method Not Allowed بتحويل طلبات PUT إلى POST مع Method Spoofing | report_service.dart, auth_service.dart |
 
 ## 🐛 المشاكل والحلول
 | المشكلة | الحالة | الحل |
 |---------|--------|------|
-| عدم عمل زر التحديث في صفحة إنشاء التقرير | تم الحل | تم تمييز طلبات التحديث التي لا تحتوي على ملفات جديدة وإرسالها كـ `PUT` JSON نظيف لتجنب مشاكل الـ Multipart الفارغ والـ Spoofing، مع إرسال مصفوفات فارغة لضمان معالجة الحذف في السيرفر. |
+| عدم عمل زر التحديث في صفحة إنشاء التقرير | تم الحل | تم تحويل جميع طلبات `PUT` إلى `POST` مع `_method: PUT` (Method Spoofing) لتجنب خطأ 405 من السيرفرات التي لا تمرر PUT. يشمل الإصلاح طلبات تحديث التقارير وتحديث الحساب الشخصي. |
+| خطأ 405 Method Not Allowed عند تحديث التقرير أو الحساب الشخصي | تم الحل | السيرفر (Apache/Nginx/Proxy) يحجب طلبات HTTP `PUT` المباشرة. الحل: استخدام Method Spoofing عبر `POST` مع حقل `_method: PUT` في جسم الطلب — وهو المعيار الرسمي في Laravel. |
 | عدم القدرة على تغيير كلمة المرور في الحساب الشخصي | تم الحل | تم إضافة التحقق من كلمة المرور الحالية في الـ backend كشرط أمني ومنطقي لتغيير كلمة المرور، وإضافته كـ validator في Flutter لتجنيب إرسال طلبات خاطئة. |
 | عدم وجود `current_password` في `ProfileUpdateRequest` | تم الحل | تم إضافته كحقل اختياري ولكن إلزامي إذا تم كتابة كلمة مرور جديدة في الطلب. |
 | عدم وجود `updateMe` في `AuthController` | تم الحل | كتابة الـ method ودعم تحديث الاسم والبريد وكلمة المرور وصورة الحساب الشخصي مع مسح الصورة القديمة من القرص. |

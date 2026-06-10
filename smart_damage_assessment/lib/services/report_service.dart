@@ -225,7 +225,9 @@ class ReportService {
         jsonData['remaining_old_images'] = remainingOldImages ?? [];
         jsonData['video_links'] = videoLinks ?? [];
 
-        final response = await _dioService.dio.put(
+        jsonData['_method'] = 'PUT';
+
+        final response = await _dioService.dio.post(
           '${ApiConstants.reports}/$id',
           data: jsonData,
         );

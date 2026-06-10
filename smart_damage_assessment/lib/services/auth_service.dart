@@ -210,7 +210,9 @@ class AuthService {
         data['password_confirmation'] = newPasswordConfirmation ?? '';
       }
 
-      final response = await _dioService.dio.put(ApiConstants.me, data: data);
+      data['_method'] = 'PUT';
+
+      final response = await _dioService.dio.post(ApiConstants.me, data: data);
 
       final responseData = response.data;
       if (responseData is Map<String, dynamic>) {
