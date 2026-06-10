@@ -6,6 +6,7 @@ use App\Models\Report;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -99,6 +100,48 @@ class ApiCompatibilityTest extends TestCase
         $this->assertEquals('Updated Name', $user->name);
         $this->assertNotNull($user->profile_image);
         Storage::disk('public')->assertExists($user->profile_image);
+    }
+
+    public function test_user_can_change_password_with_correct_current_password_via_api()
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/me', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'current_password' => 'old-password',
+                'password' => 'new-password123',
+                'password_confirmation' => 'new-password123',
+            ]);
+
+        $response->assertStatus(200);
+        $user->refresh();
+        $this->assertTrue(Hash::check('new-password123', $user->password));
+    }
+
+    public function test_user_cannot_change_password_with_wrong_current_password_via_api()
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/me', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'current_password' => 'wrong-old-password',
+                'password' => 'new-password123',
+                'password_confirmation' => 'new-password123',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['current_password']);
+        
+        $user->refresh();
+        $this->assertTrue(Hash::check('old-password', $user->password));
     }
 
     public function test_user_can_update_report_via_api()

@@ -285,6 +285,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 TextFormField(
                   controller: _currentPasswordController,
                   obscureText: _obscureCurrent,
+                  validator: (v) {
+                    if (_newPasswordController.text.isNotEmpty &&
+                        (v == null || v.trim().isEmpty)) {
+                      return 'يرجى إدخال كلمة المرور الحالية لتغيير كلمة المرور';
+                    }
+                    return null;
+                  },
                   decoration: _inputDecoration(loc.currentPassword).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(

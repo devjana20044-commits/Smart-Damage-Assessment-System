@@ -178,6 +178,16 @@ class AuthController extends Controller
         $user->email = $request->email;
 
         if ($request->filled('password')) {
+            // Verify current password is correct
+            if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => [
+                        'current_password' => ['كلمة المرور الحالية غير صحيحة.']
+                    ]
+                ], 422);
+            }
             $user->password = Hash::make($request->password);
         }
 

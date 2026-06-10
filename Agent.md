@@ -55,10 +55,14 @@ smart-damage-assessment-system/
 ## ⚠️ المشاكل المعروفة والحلول
 - تعيين `Content-Type` يدوياً لـ `multipart/form-data` في Dio يحذف boundary التلقائي ويسبب فشل خادم الـ backend في قراءة البيانات.
 - نقص الـ endpoints مثل `/register` وتعديل الملف الشخصي `/me` وتحديث التقارير `/reports/{id}` في Laravel.
+- فشل التحديث للتقارير عند عدم وجود ملفات جديدة بسبب مشاكل الـ Multipart الفارغ والـ Spoofing: تم الحل بفصل طلبات الـ JSON والـ Multipart.
+- عدم التحقق من كلمة المرور الحالية في تعديل الملف الشخصي: تم الحل بفرض `current_password` في الـ Request والتحقق عبر `Hash::check`.
 
 ## 🚫 أنماط يجب تجنبها
 - تعيين `Content-Type` يدوياً لـ `multipart/form-data` في Flutter (دع Dio يتعامل معها تلقائياً).
+- إرسال طلبات `POST` مع Spoofing كـ `multipart/form-data` بدون ملفات: يسبب مشاكل معالجة على السيرفرات، بدلاً من ذلك استخدم طلبات `PUT` JSON نظيفة.
 
 ## 🧹 صيانة الذاكرة (Memory Hygiene)
-### آخر تنظيف: 2026-05-19
+### آخر تنظيف: 2026-06-10
 - المخطط الشجري محدث.
+- المشاكل المعروفة محدثة.
