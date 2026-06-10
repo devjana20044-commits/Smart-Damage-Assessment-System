@@ -24,18 +24,20 @@
 
 ---
 
-### 3️⃣ نتائج الفحص:
-قمنا بتشغيل اختبارات التوافقية البرمجية الخاصة بالـ API:
-```bash
-php artisan test --filter ApiCompatibilityTest
-```
-**النتيجة:**
-```
-✓ user can change password with correct current password via api
-✓ user cannot change password with wrong current password via api
-PASS  Tests\Feature\ApiCompatibilityTest (7 tests passed)
-```
-جميع الاختبارات نجحت 100%.
+### 3️⃣ نتائج الفحص والنشر (Git Push):
+* تم دفع التعديلات بنجاح لمستودع GitHub.
+* **معرف الالتزام الأخير (Commit ID):** `c1d05a7efd188737df95a94025b3a4a984fe7542`
+* قمنا بتشغيل اختبارات التوافقية البرمجية الخاصة بالـ API:
+  ```bash
+  php artisan test --filter ApiCompatibilityTest
+  ```
+  **النتيجة:**
+  ```
+  ✓ user can change password with correct current password via api
+  ✓ user cannot change password with wrong current password via api
+  PASS  Tests\Feature\ApiCompatibilityTest (7 tests passed)
+  ```
+  جميع الاختبارات نجحت 100%.
 
 ---
 
