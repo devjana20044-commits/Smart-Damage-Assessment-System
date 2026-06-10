@@ -27,4 +27,6 @@
 | `php artisan test` | `Class "Database\Factories\UserFactory" not found` | تم إنشاء ملف `database/factories/UserFactory.php` لدعم بناء كائنات المستخدم في بيئة الاختبار. |
 | `php artisan test` | `Call to undefined method QueueFake::assertDispatched()` | تم تعديل استدعاء التحقق إلى `Queue::assertPushed()` المتوافق مع مكتبة فحص الطوابير في Laravel. |
 | `git push origin main` | `Updates were rejected because the remote contains work that you do not have locally` | تشغيل `git pull origin main` لسحب التعديلات ودمجها أولاً ثم إعادة تشغيل `git push`. |
+| `git add ... && git commit ...` | `The token '&&' is not a valid statement separator in this version` | استخدام الفاصلة المنقوطة `;` للفصل بين الأوامر في PowerShell أو تشغيل كل أمر على حدة. |
+
 
