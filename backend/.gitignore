@@ -9,8 +9,10 @@
 storage/framework/sessions/*
 storage/framework/views/*
 storage/logs/*
+storage/framework/testing/*
 !storage/framework/sessions/.gitkeep
 !storage/framework/views/.gitkeep
 !storage/logs/.gitkeep
+!storage/framework/testing/.gitkeep
 npm-debug.log
 yarn-error.log
