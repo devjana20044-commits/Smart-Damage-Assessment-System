@@ -26,3 +26,5 @@
 | `php artisan test` | `Could not read XML from file ... phpunit.xml.dist` | تم إنشاء ملف `phpunit.xml` مخصص للاختبارات وملف `tests/TestCase.php` المفقود. |
 | `php artisan test` | `Class "Database\Factories\UserFactory" not found` | تم إنشاء ملف `database/factories/UserFactory.php` لدعم بناء كائنات المستخدم في بيئة الاختبار. |
 | `php artisan test` | `Call to undefined method QueueFake::assertDispatched()` | تم تعديل استدعاء التحقق إلى `Queue::assertPushed()` المتوافق مع مكتبة فحص الطوابير في Laravel. |
+| `git push origin main` | `Updates were rejected because the remote contains work that you do not have locally` | تشغيل `git pull origin main` لسحب التعديلات ودمجها أولاً ثم إعادة تشغيل `git push`. |
+
