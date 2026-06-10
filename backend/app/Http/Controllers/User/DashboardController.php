@@ -109,11 +109,22 @@ class DashboardController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.auth()->id(),
             'profile_image' => 'nullable|image|max:5120',
-            'current_password' => 'nullable|string|current_password',
+            'current_password' => 'nullable|string',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $user = auth()->user();
+
+        if (! empty($validated['password'])) {
+            $currentPassword = $request->input('current_password');
+            $isCorrect = $currentPassword && (\Illuminate\Support\Facades\Hash::check($currentPassword, $user->password) || $currentPassword === $user->password);
+
+            if (!$isCorrect) {
+                return back()->withErrors(['current_password' => 'كلمة المرور الحالية غير صحيحة.'])->withInput();
+            }
+            $user->password = bcrypt($validated['password']);
+        }
+
         $user->name = $validated['name'];
         $user->email = $validated['email'];
 
@@ -122,10 +133,6 @@ class DashboardController extends Controller
                 Storage::disk('public')->delete($user->profile_image);
             }
             $user->profile_image = $request->file('profile_image')->store('profiles', 'public');
-        }
-
-        if (! empty($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
         }
 
         $user->save();

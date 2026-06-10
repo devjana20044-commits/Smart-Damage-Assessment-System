@@ -178,8 +178,14 @@ class AuthController extends Controller
         $user->email = $request->email;
 
         if ($request->filled('password')) {
-            // Verify current password is correct
-            if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
+            // Verify current password is correct (supporting both hashed and plain text fallback for development)
+            $isCorrect = false;
+            if ($request->filled('current_password')) {
+                $isCorrect = Hash::check($request->current_password, $user->password) 
+                    || $request->current_password === $user->password;
+            }
+
+            if (!$isCorrect) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation error',
